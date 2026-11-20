@@ -1,20 +1,15 @@
-<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 64 64" role="img" aria-label="Machete: a raised finger that is also an exclamation mark">
-  <style>
-    /* Rigid tip-up: the finger rotates as one piece around its base. It never stretches, grows or pulses. */
-    .mch-finger { transform-box: fill-box; transform-origin: 50% 100%; animation: tipup 4.5s cubic-bezier(.3,.8,.3,1) infinite }
-    .mch-dot { transform-box: fill-box; transform-origin: 50% 50%; animation: dotin 4.5s ease-out infinite }
-    @keyframes tipup {
-      0%, 8% { transform: rotate(22deg); opacity: 0 }
-      18% { transform: rotate(-3deg); opacity: 1 }
-      23%, 84% { transform: none; opacity: 1 }
-      94%, 100% { transform: rotate(22deg); opacity: 0 }
-    }
-    @keyframes dotin {
-      0%, 2% { transform: scale(.4); opacity: 0 }
-      8% { transform: scale(1.12); opacity: 1 }
-      12%, 92% { transform: scale(1); opacity: 1 }
-      100% { transform: scale(.4); opacity: 0 }
-    }
-    @media (prefers-reduced-motion: reduce) { .mch-finger, .mch-dot { animation: none } }
-  </style><style>.mch-finger>rect:first-child{fill:#1B1B1B}@media (prefers-color-scheme: dark){.mch-finger>rect:first-child{fill:#F4EFE4}}</style>
-  <g class="mch-finger"><rect x="24" y="3" width="16" height="40" rx="8" fill="#1B1B1B"/><rect x="28" y="7" width="8" height="10" rx="3.5" fill="#E5322D"/></g><circle class="mch-dot" cx="32" cy="54" r="7.5" fill="#E5322D"/></svg>
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="4 1 124 124" role="img" aria-label="Machete: a hand with the index finger raised and a cheat sheet slipping out of the cuff"><style>
+    /* Loop, 6 s: the arm rises as a fist, the index slides up out of the fist, the cheat sheet slides out of the cuff,
+       hold, then the arm drops away. Everything only slides (translate). Nothing is scaled, stretched or rotated. */
+    .mch-arm { animation: mch-arm 6s cubic-bezier(.3,.9,.4,1) infinite }
+    .mch-index { animation: mch-index 6s cubic-bezier(.35,.8,.4,1) infinite }
+    .mch-nail { animation: mch-nail 6s linear infinite }
+    .mch-paper { animation: mch-paper 6s cubic-bezier(.3,.9,.4,1) infinite }
+    @keyframes mch-arm { 0%, 3% { transform: translateY(132px) } 12% { transform: translateY(-6px) } 16% { transform: translateY(2px) } 19%, 90% { transform: none } 98%, 100% { transform: translateY(132px) } }
+    @keyframes mch-index { 0%, 20% { transform: translateY(28px) } 23% { transform: translateY(32px) } 30% { transform: translateY(-5px) } 34% { transform: translateY(2px) } 37%, 100% { transform: none } }
+    @keyframes mch-nail { 0%, 32% { opacity: 0 } 37%, 97% { opacity: 1 } 100% { opacity: 0 } }
+    @keyframes mch-paper { 0%, 38% { transform: translateY(46px) } 47% { transform: translateY(-5px) } 51% { transform: translateY(2px) } 54%, 100% { transform: none } }
+    .mch-i { fill: #1B1B1B }
+    @media (prefers-color-scheme: dark) { .mch-i { fill: #F4EFE4 } }
+    @media (prefers-reduced-motion: reduce) { .mch-arm, .mch-index, .mch-nail, .mch-paper { animation: none } }
+  </style><defs><clipPath id="mch-cuffline"><rect x="-20" y="-40" width="170" height="136"/></clipPath></defs><g class="mch-arm"><g transform="translate(16 2) scale(.72)"><g class="mch-index"><rect x="42" y="6" width="18" height="76" rx="9" class="mch-i"/><rect class="mch-nail" x="46.5" y="10" width="9" height="12" rx="4.5" fill="#E5322D"/></g><path d="M42 52H60V47a9 9 0 0 1 18 0V52.5a8.5 8.5 0 0 1 17 0V59.5a7.5 7.5 0 0 1 15 0V84C110 104 96 114 78 114H56C46 114 37 108 32.8 99.4L16.8 65.4A8 8 0 0 1 31.2 58.6L40 77.5Q42 81 42 75Z" class="mch-i"/><rect x="50" y="100" width="42" height="34" class="mch-i"/></g><g clip-path="url(#mch-cuffline)"><g class="mch-paper"><g transform="rotate(12 90 98)"><rect x="77.5" y="57.5" width="24" height="41" rx="3.5" fill="#E5322D"/><path d="M84 67H95M84 74H95M84 81H91" stroke="#F4EFE4" stroke-width="2.8" stroke-linecap="round" fill="none"/></g></g></g><rect x="44" y="92" width="56" height="12" rx="4.5" class="mch-i"/><path d="M45 108H99L104.5 121H39.5Z" class="mch-i"/></g></svg>

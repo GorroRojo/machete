@@ -1,85 +1,133 @@
-/* Machete logo motion
-   ====================
-   Markup (inline SVG, so the parts can move):
+/* Machete logo motion ("Machete en la manga")
+   ==========================================
+   The mark: a hand with the index finger raised, coming out of a cuff, with a red cheat sheet tucked in the cuff.
 
-     <svg class="mch-logo" viewBox="0 0 64 64" width="32" height="32" aria-hidden="true">
-       <g class="mch-finger"> …the two <rect>s (bar and nail) from machete-logo.svg… </g>
-       <circle class="mch-dot" cx="32" cy="54" r="7.5" fill="#E5322D"/>
+   Markup: inline the SVG so the parts can move. Copy the shapes from machete-logo-animated.svg (it already carries
+   these classes; drop its <style>), or from machete-logo-small.svg for sizes under about 40 px:
+
+     <svg class="mch-logo" viewBox="4 1 124 124" width="64" height="64" aria-hidden="true">
+       <defs><clipPath id="mch-cuffline">…</clipPath></defs>
+       <g class="mch-arm">                         the whole arm: hand, cuff, sleeve
+         <g transform="translate(16 2) scale(.72)">
+           <g class="mch-index">                   the index finger; it is drawn BEFORE the fist, so the fist covers its base
+             <rect …/> <rect class="mch-nail" …/>  finger and red nail
+           </g>
+           <path …/> <rect …/>                     fist and wrist
+         </g>
+         <g clip-path="url(#mch-cuffline)">        cuts the cheat sheet off at the cuff, so it comes out of the cuff
+           <g class="mch-paper">…</g>              the red cheat sheet
+         </g>
+         <rect …/> <path …/>                       cuff and sleeve
+       </g>
      </svg>
+
+   The small mark (machete-logo-small.svg, viewBox "1 2 120 120") has .mch-arm, .mch-index and a red .mch-cuff bar,
+   and no nail or cheat sheet. Every class below works on both; rules for parts a mark does not have simply do nothing.
 
    Add ONE of these classes to the <svg>:
 
-     .mch-landed   "card landed": the finger tips up into place as one rigid piece, then the dot pops in.
-                   Plays once (0.6 s). Use when a new card arrives.
-     .mch-looking  "looking it up": the dot blinks like a text cursor while a search runs. Loops; the finger stays still.
-     .mch-headsup  "heads-up": two quick rigid tilts from the base (the "¡ojo!" finger wag) and the dot flashes.
-                   Plays once (0.7 s). Use for a heads-up nobody asked for.
-     .mch-loop     README / hero loop, kept calm: tip up, hold, tip away. 4.5 s, loops.
+     .mch-landed   "card landed": the index slides up out of the fist and settles, then the cheat sheet peeks out of
+                   the cuff. Plays once (about 1.3 s). Use when a new card arrives.
+     .mch-looking  "looking it up": a calm idle. The cheat sheet slips slowly down into the cuff and back, as if being
+                   read under the table. Loops every 2.6 s; the hand stays still. (Small mark: the finger dips slightly.)
+     .mch-headsup  "heads-up": two quick raises of the finger, straight up and down. Plays once (0.8 s).
+                   Use for a heads-up nobody asked for.
+     .mch-loop     README / hero loop: the arm rises as a fist, the finger slides up, the cheat sheet slides out,
+                   hold, the arm drops away. 6 s, loops. Needs the svg to clip (do not set overflow: visible).
 
    Replay a one-shot from JS:  el.classList.remove('mch-landed'); void el.getBoundingClientRect(); el.classList.add('mch-landed');
 
-   Rules these keep (do not break them in new motions): the finger only ROTATES around its base, as one rigid
-   piece. It never stretches, grows, throbs, pulses in size or bends at the tip. Only the dot may scale or blink.
-   The mark itself stays abstract: a pill, a nail, a dot. Never add anatomy (creases, knuckles, shading).
-   With prefers-reduced-motion everything is still, and .mch-looking shows a dimmed dot instead of blinking. */
+   Rules these keep (do not break them in new motions):
+   - Parts only SLIDE (translate), along the vertical. Nothing is scaled, stretched, squashed or rotated: a scaled
+     finger looks flattened, and a finger rocking side to side reads as "no, no".
+   - A part that appears comes out from behind what covers it: the finger from behind the fist (folded, only its
+     rounded tip shows, like a fourth knuckle), the cheat sheet from inside the cuff.
+   - The hand stays flat: silhouette only. Never add creases, knuckle lines, shading or skin detail.
+   With prefers-reduced-motion everything is still, in the settled pose.
 
-.mch-logo { overflow: visible }
-.mch-logo .mch-finger { transform-box: fill-box; transform-origin: 50% 100% }
-.mch-logo .mch-dot { transform-box: fill-box; transform-origin: 50% 50% }
+   Distances are in the svg's own units (the hand group is scaled, so 28 on .mch-index is the full fold). */
 
 /* card landed */
-.mch-landed .mch-finger { animation: mch-tipup .42s cubic-bezier(.3, .8, .3, 1) both }
-.mch-landed .mch-dot { animation: mch-dotpop .26s ease-out .34s both }
-@keyframes mch-tipup {
-  0% { transform: rotate(22deg); opacity: 0 }
-  70% { transform: rotate(-3deg); opacity: 1 }
-  100% { transform: none; opacity: 1 }
+.mch-landed .mch-index { animation: mch-raise .8s cubic-bezier(.35, .8, .4, 1) both }
+.mch-landed .mch-nail { animation: mch-nail .3s linear .55s both }
+.mch-landed .mch-paper { animation: mch-paper-out .6s cubic-bezier(.3, .9, .4, 1) .65s both }
+.mch-landed .mch-cuff { animation: mch-cuff-hop .35s ease-out .6s both }
+@keyframes mch-raise {
+  0%, 12% { transform: translateY(28px) }   /* folded: a fist */
+  26% { transform: translateY(32px) }       /* a small dip first */
+  68% { transform: translateY(-5px) }       /* up, a little past */
+  86% { transform: translateY(2px) }
+  100% { transform: none }
 }
-@keyframes mch-dotpop {
-  0% { transform: scale(.4); opacity: 0 }
-  60% { transform: scale(1.14); opacity: 1 }
-  100% { transform: none; opacity: 1 }
+@keyframes mch-nail {
+  from { opacity: 0 }
+  to { opacity: 1 }
+}
+@keyframes mch-paper-out {
+  0% { transform: translateY(46px) }        /* fully inside the cuff */
+  65% { transform: translateY(-5px) }
+  85% { transform: translateY(2px) }
+  100% { transform: none }
+}
+@keyframes mch-cuff-hop {
+  0%, 100% { transform: none }
+  45% { transform: translateY(3px) }
 }
 
 /* looking it up */
-.mch-looking .mch-dot { animation: mch-blink 1.06s steps(1, end) infinite }
-@keyframes mch-blink {
-  0%, 55% { opacity: 1 }
-  56%, 100% { opacity: .15 }
+.mch-looking .mch-paper { animation: mch-read 2.6s ease-in-out infinite }
+.mch-looking:not(:has(.mch-paper)) .mch-index { animation: mch-nod 2.6s ease-in-out infinite }
+@keyframes mch-read {
+  0%, 15%, 100% { transform: none }
+  45%, 65% { transform: translateY(24px) }
+}
+@keyframes mch-nod {
+  0%, 20%, 100% { transform: none }
+  50%, 60% { transform: translateY(8px) }
 }
 
 /* heads-up */
-.mch-headsup .mch-finger { animation: mch-wag .7s cubic-bezier(.35, 0, .25, 1) both }
-.mch-headsup .mch-dot { animation: mch-flash .7s linear both }
-@keyframes mch-wag {
+.mch-headsup .mch-index { animation: mch-double .8s cubic-bezier(.35, 0, .3, 1) both }
+@keyframes mch-double {
   0%, 100% { transform: none }
-  18% { transform: rotate(13deg) }
-  40% { transform: rotate(-2deg) }
-  62% { transform: rotate(13deg) }
-  86% { transform: rotate(-1deg) }
-}
-@keyframes mch-flash {
-  0%, 30%, 52%, 100% { opacity: 1 }
-  18%, 62% { opacity: .35 }
+  16% { transform: translateY(14px) }
+  36% { transform: translateY(-5px) }
+  54% { transform: translateY(14px) }
+  76% { transform: translateY(-5px) }
+  90% { transform: translateY(1px) }
 }
 
 /* README / hero loop */
-.mch-loop .mch-finger { animation: mch-loop-finger 4.5s cubic-bezier(.3, .8, .3, 1) infinite }
-.mch-loop .mch-dot { animation: mch-loop-dot 4.5s ease-out infinite }
-@keyframes mch-loop-finger {
-  0%, 8% { transform: rotate(22deg); opacity: 0 }
-  18% { transform: rotate(-3deg); opacity: 1 }
-  23%, 84% { transform: none; opacity: 1 }
-  94%, 100% { transform: rotate(22deg); opacity: 0 }
+.mch-loop .mch-arm { animation: mch-loop-arm 6s cubic-bezier(.3, .9, .4, 1) infinite }
+.mch-loop .mch-index { animation: mch-loop-index 6s cubic-bezier(.35, .8, .4, 1) infinite }
+.mch-loop .mch-nail { animation: mch-loop-nail 6s linear infinite }
+.mch-loop .mch-paper { animation: mch-loop-paper 6s cubic-bezier(.3, .9, .4, 1) infinite }
+@keyframes mch-loop-arm {
+  0%, 3% { transform: translateY(132px) }
+  12% { transform: translateY(-6px) }
+  16% { transform: translateY(2px) }
+  19%, 90% { transform: none }
+  98%, 100% { transform: translateY(132px) }
 }
-@keyframes mch-loop-dot {
-  0%, 2% { transform: scale(.4); opacity: 0 }
-  8% { transform: scale(1.12); opacity: 1 }
-  12%, 92% { transform: none; opacity: 1 }
-  100% { transform: scale(.4); opacity: 0 }
+@keyframes mch-loop-index {
+  0%, 20% { transform: translateY(28px) }
+  23% { transform: translateY(32px) }
+  30% { transform: translateY(-5px) }
+  34% { transform: translateY(2px) }
+  37%, 100% { transform: none }
+}
+@keyframes mch-loop-nail {
+  0%, 32% { opacity: 0 }
+  37%, 97% { opacity: 1 }
+  100% { opacity: 0 }
+}
+@keyframes mch-loop-paper {
+  0%, 38% { transform: translateY(46px) }
+  47% { transform: translateY(-5px) }
+  51% { transform: translateY(2px) }
+  54%, 100% { transform: none }
 }
 
 @media (prefers-reduced-motion: reduce) {
-  .mch-logo .mch-finger, .mch-logo .mch-dot { animation: none !important }
-  .mch-looking .mch-dot { opacity: .45 }
+  .mch-logo .mch-arm, .mch-logo .mch-index, .mch-logo .mch-nail, .mch-logo .mch-paper, .mch-logo .mch-cuff { animation: none !important }
 }

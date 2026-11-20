@@ -1,4 +1,4 @@
-<p align="left"><img src="assets/machete-logo-animated.svg" width="88" alt="Machete logo: a raised finger that is also an exclamation mark"></p>
+<p align="left"><img src="assets/machete-logo-animated.svg" width="88" alt="Machete logo: a hand with the index finger raised and a cheat sheet slipping out of the cuff"></p>
 
 # Machete: a live meeting copilot for Claude Code
 
