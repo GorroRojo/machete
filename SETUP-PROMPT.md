@@ -100,6 +100,8 @@ Plain English. Change anything, save, and it applies from the next meeting. The 
 ## File: `README.md`
 
 `````markdown
+<p align="left"><img src="assets/machete-logo-animated.svg" width="88" alt="Machete logo: a hand with the index finger raised and a cheat sheet slipping out of the cuff"></p>
+
 # Machete: a live meeting copilot for Claude Code
 
 Machete listens to the meeting you're in and, a few times an hour, offers to save you a step: a small card in the
@@ -199,6 +201,10 @@ ProgramArguments are the kit's `.venv/bin/python` and `machete/listen.py`, with 
 - Rare on purpose: about 6 cards an hour at most, none in the first 2 minutes except answers to questions asked out loud. Less-sure items go on the end list.
 - The transcript is a few seconds behind and mishears names; Machete checks names against your notes, the invite or
   the CRM before using them.
+- **Using Fathom?** Keep it: Fathom writes up the call afterwards, Machete works during it. Fathom doesn't keep a live
+  transcript on your computer, so run Machete with the `audio` source (your mic and computer sound, transcribed
+  locally) next to it. The `audio` source is **beta and untested in a real meeting so far**; real meetings have run
+  on Wispr Flow.
 - Not supported live: **Granola, Otter, Fireflies** and other cloud notetakers don't write a live transcript file on
   your computer that Machete can read, so they aren't supported. **Zoom / Google Meet captions** only work if some
   tool saves them to a file as the meeting goes.
@@ -900,6 +906,49 @@ def work_area(root) -> tuple[int, int, int, int]:
     return 0, 0, root.winfo_screenwidth(), root.winfo_screenheight() - 60
 
 
+LOGO_RED = "#E5322D"
+LOGO_FOLD = 28  # hand units the index sits lower when folded: only its rounded tip shows, as a fourth knuckle
+# The index's offset, one frame each: folded, a small dip, then it slides straight up out of the fist and settles.
+LOGO_RAISE = (28, 28, 30, 31, 24, 13, 3, -4, -5, -2, 1, 0)
+
+
+def logo_shapes(size: float, lift: float = 0.0, ink: str = "#F4EFE4") -> list[tuple[list[float], str]]:
+    """The small mark (assets/machete-logo-small.svg) as canvas polygons, back to front: index finger, fist, red cuff.
+    lift: how far down the index sits, in hand units (0 = raised, LOGO_FOLD = folded behind the fist).
+    The finger only slides; nothing is ever scaled or rotated. The fist is drawn over it, so its base stays covered."""
+    import math
+    k = size / 120
+
+    def arc(cx: float, cy: float, r: float, a0: float, a1: float, n: int = 8) -> list[tuple[float, float]]:
+        return [(cx + r * math.cos(math.radians(a0 + (a1 - a0) * i / n)),
+                 cy + r * math.sin(math.radians(a0 + (a1 - a0) * i / n))) for i in range(n + 1)]
+
+    def cubic(p0, p1, p2, p3, n: int = 10) -> list[tuple[float, float]]:
+        return [tuple((1 - t) ** 3 * a + 3 * (1 - t) ** 2 * t * b + 3 * (1 - t) * t * t * c + t ** 3 * d
+                      for a, b, c, d in zip(p0, p1, p2, p3)) for t in (i / n for i in range(1, n + 1))]
+
+    def pill(left: float, top: float, right: float, bottom: float, r: float) -> list[tuple[float, float]]:
+        return (arc(left + r, top + r, r, 180, 270) + arc(right - r, top + r, r, 270, 360)
+                + arc(right - r, bottom - r, r, 0, 90) + arc(left + r, bottom - r, r, 90, 180))
+
+    def hand(pts: list[tuple[float, float]]) -> list[float]:  # hand units -> mark units -> pixels
+        return [v for x, y in pts for v in ((9 + .82 * x - 1) * k, (2 + .82 * y - 2) * k)]
+
+    index = pill(42, 6 + lift, 60, 82 + lift, 9)
+    fist = ([(42, 52), (60, 52)] + arc(69, 47, 9, 180, 360) + arc(86.5, 52.5, 8.5, 180, 360)
+            + arc(102.5, 59.5, 7.5, 180, 360) + [(110, 84)] + cubic((110, 84), (110, 104), (96, 114), (78, 114))
+            + [(56, 114)] + cubic((56, 114), (46, 114), (37, 108), (32.8, 99.4))
+            + arc(24, 62, 8, 154.7, 334.7) + [(40, 77.5), (41.6, 79.5), (42, 75)])
+    cuff = [v for x, y in pill(42, 101, 92, 117, 5.5) for v in ((x - 1) * k, (y - 2) * k)]
+    return [(hand(index), ink), (hand(fist), ink), (cuff, LOGO_RED)]
+
+
+def draw_logo(canvas, size: int, lift: float = 0.0) -> None:
+    canvas.delete("all")
+    for points, colour in logo_shapes(size, lift):
+        canvas.create_polygon(points, fill=colour, outline="")
+
+
 def window(capturable: bool = False, on_ready=None) -> None:
     """capturable=True: a copy screenshots can see (tests). on_ready(root, frame): called once drawn (tests)."""
     if IS_WIN:
@@ -946,6 +995,18 @@ def window(capturable: bool = False, on_ready=None) -> None:
     moved: list = [None]
     grab = {"x": 0, "y": 0}
     WIDTH = 400
+    LOGO = 26  # px, the mark in the header
+    newest: list = [max(cards(), default=0)]  # a card above this id is new: the finger goes up
+    root.logo_plays = 0  # tests read this
+    root.logo_lift = 0
+
+    def play_logo(canvas, frame_no: int = 0) -> None:
+        if not canvas.winfo_exists():  # the header was redrawn meanwhile
+            return
+        root.logo_lift = LOGO_RAISE[frame_no]  # tests read this
+        draw_logo(canvas, LOGO, LOGO_RAISE[frame_no])
+        if frame_no + 1 < len(LOGO_RAISE):
+            root.after(40, play_logo, canvas, frame_no + 1)
 
     def drag_start(e) -> None:
         grab.update(x=e.x_root - root.winfo_x(), y=e.y_root - root.winfo_y())
@@ -1000,7 +1061,17 @@ def window(capturable: bool = False, on_ready=None) -> None:
             return
         bar = tk.Frame(frame, bg=BG)
         bar.pack(fill="x")
+        mark = tk.Canvas(bar, width=LOGO, height=LOGO, bg=BG, highlightthickness=0, bd=0)
+        mark.pack(side="left", padx=(0, 0))
         tk.Label(bar, text="Machete", bg=BG, fg=DIM, font=(FONT, 9)).pack(side="left", padx=(2, 0))
+        top = max(c["id"] for c in visible)
+        if top > newest[0]:  # a new card landed
+            newest[0] = top
+            root.logo_plays += 1
+            draw_logo(mark, LOGO, LOGO_FOLD)  # a fist first, then the finger slides up
+            root.after(120, play_logo, mark)
+        else:
+            draw_logo(mark, LOGO)
         x = tk.Button(bar, text="✕", command=closed, font=(FONT, 10), relief="flat", bd=0, cursor="hand2", padx=6,
                       pady=0, bg=BG, fg=DIM, activebackground="#3c3c46", activeforeground=FG)
         x.pack(side="right")

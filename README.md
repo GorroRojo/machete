@@ -99,6 +99,10 @@ ProgramArguments are the kit's `.venv/bin/python` and `machete/listen.py`, with 
 - Rare on purpose: about 6 cards an hour at most, none in the first 2 minutes except answers to questions asked out loud. Less-sure items go on the end list.
 - The transcript is a few seconds behind and mishears names; Machete checks names against your notes, the invite or
   the CRM before using them.
+- **Using Fathom?** Keep it: Fathom writes up the call afterwards, Machete works during it. Fathom doesn't keep a live
+  transcript on your computer, so run Machete with the `audio` source (your mic and computer sound, transcribed
+  locally) next to it. The `audio` source is **beta and untested in a real meeting so far**; real meetings have run
+  on Wispr Flow.
 - Not supported live: **Granola, Otter, Fireflies** and other cloud notetakers don't write a live transcript file on
   your computer that Machete can read, so they aren't supported. **Zoom / Google Meet captions** only work if some
   tool saves them to a file as the meeting goes.
