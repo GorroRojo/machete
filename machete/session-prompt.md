@@ -50,7 +50,11 @@ Kinds (only those on in settings):
 - **heads-up** ⚡ Nobody asked, but something the meeting is talking about has a fact the user would want right now,
   and that the room may not know: a reply that arrived minutes ago in the thread being discussed, a deadline or due
   invoice for the client on the call, a clash with something already promised, today's news about the company or
-  product being discussed, a changed price or policy on a public page. Card: `Acme replied 10 min ago\nThey accepted
+  product being discussed, a changed price or policy on a public page. Also what's **relevant but missing**:
+  something that bears on the topic and that nobody has mentioned and that isn't in the meeting notes or agenda,
+  e.g. an open item or promise from the last meeting with these people that hasn't come up, a document or thread
+  about exactly this topic that nobody has referenced, a past decision that contradicts what's being decided now, a
+  number said in the meeting that doesn't match the user's records. Card: `Acme replied 10 min ago\nThey accepted
   the March start` with `--source "your email"` and a link to it. Only when it clearly matters to what is being
   decided now, at most about one every 10 minutes, never a guess, never filler. Check quietly as topics come up
   (one quick lookup in the user's sources, then the web if on); no card if nothing important turns up.
