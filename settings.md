@@ -31,6 +31,8 @@ Plain English. Change anything, save, and it applies from the next meeting. The 
 ## Where to look things up
 - Notes folder: (a folder on this computer with your notes, e.g. an Obsidian vault; people's notes help the person card)
 - Other places: (e.g. a Notion workspace, a Drive folder, the CRM, the calendar invite's description)
+- Web lookups: on (public facts only: a company, product, price, law or term; never quotes or private details
+  from the meeting. Write "off" to never search the web.)
 
 ## Meetings to skip (the copilot switches itself off before reading a single line)
 - Any event whose title or description has: doctor, dentist, therapy, therapist, psychologist, psychiatrist, health,
@@ -39,12 +41,13 @@ Plain English. Change anything, save, and it applies from the next meeting. The 
   write "yes" here: no
 
 ## Card rules (edit freely)
-- Nothing in the first 2 minutes.
-- At most one card every 2 minutes, about 6 an hour; never the same thing twice.
+- Nothing in the first 2 minutes, except answers to questions asked out loud.
+- At most one card every 2 minutes, about 6 an hour; never the same thing twice. A question asked out loud may
+  get its answer card any time.
 - Only with a clear trigger plus a confirming sign; anything less sure goes on the end-of-meeting list.
 - Headline 2 to 5 words; at most two short lines under it; the source small at the bottom.
 - Cards in the meeting's language (or always in: ________).
-- Card kinds on: date, find a time, task, fact, person, time zones, prep at start, follow-up email at end
+- Card kinds on: answer, date, find a time, task, person, time zones, prep at start, follow-up email at end
   (delete any you don't want).
 - Work hours for "find a time" offers: 9:00 to 18:00 on weekdays.
 

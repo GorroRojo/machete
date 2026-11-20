@@ -13,7 +13,7 @@ Cards it can offer:
 | 🗓️ Find a time | "Let's find a time for all of us" | Drafts 2-3 free slots as options, or holds one on your calendar; never invites |
 | 🌐 Time zones | "3 pm Eastern" | Nothing (your time and theirs) |
 | ✅ Task | "I'll send Sam the numbers by Friday" | Creates it in your task tool, or a local reminder if you have none |
-| 🔢 Fact | "What did we quote last time?" | Nothing (the answer, with its source) |
+| 🔎 Answer | "What did we quote last time?", "How big is their team?" | Nothing (the answer while the question is open, with its source: your mail, docs, sheets, CRM, notes or, if on, the web) |
 | 👤 Person | Someone in your notes or CRM comes up | Nothing (the one useful fact) |
 | ✉️ Follow-up (at the end) | The meeting had other people | Drafts the follow-up email; never sends it |
 
@@ -83,7 +83,7 @@ ProgramArguments are the kit's `.venv/bin/python` and `machete/listen.py`, with 
 
 ## Limits (true today)
 
-- Rare on purpose: about 6 cards an hour at most, none in the first 2 minutes. Less-sure items go on the end list.
+- Rare on purpose: about 6 cards an hour at most, none in the first 2 minutes except answers to questions asked out loud. Less-sure items go on the end list.
 - The transcript is a few seconds behind and mishears names; Machete checks names against your notes, the invite or
   the CRM before using them.
 - Not supported live: **Granola, Otter, Fireflies** and other cloud notetakers don't write a live transcript file on

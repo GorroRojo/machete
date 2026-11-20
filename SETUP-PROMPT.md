@@ -71,6 +71,8 @@ Plain English. Change anything, save, and it applies from the next meeting. The 
 ## Where to look things up
 - Notes folder: (a folder on this computer with your notes, e.g. an Obsidian vault; people's notes help the person card)
 - Other places: (e.g. a Notion workspace, a Drive folder, the CRM, the calendar invite's description)
+- Web lookups: on (public facts only: a company, product, price, law or term; never quotes or private details
+  from the meeting. Write "off" to never search the web.)
 
 ## Meetings to skip (the copilot switches itself off before reading a single line)
 - Any event whose title or description has: doctor, dentist, therapy, therapist, psychologist, psychiatrist, health,
@@ -79,12 +81,13 @@ Plain English. Change anything, save, and it applies from the next meeting. The 
   write "yes" here: no
 
 ## Card rules (edit freely)
-- Nothing in the first 2 minutes.
-- At most one card every 2 minutes, about 6 an hour; never the same thing twice.
+- Nothing in the first 2 minutes, except answers to questions asked out loud.
+- At most one card every 2 minutes, about 6 an hour; never the same thing twice. A question asked out loud may
+  get its answer card any time.
 - Only with a clear trigger plus a confirming sign; anything less sure goes on the end-of-meeting list.
 - Headline 2 to 5 words; at most two short lines under it; the source small at the bottom.
 - Cards in the meeting's language (or always in: ________).
-- Card kinds on: date, find a time, task, fact, person, time zones, prep at start, follow-up email at end
+- Card kinds on: answer, date, find a time, task, person, time zones, prep at start, follow-up email at end
   (delete any you don't want).
 - Work hours for "find a time" offers: 9:00 to 18:00 on weekdays.
 
@@ -112,7 +115,7 @@ Cards it can offer:
 | 🗓️ Find a time | "Let's find a time for all of us" | Drafts 2-3 free slots as options, or holds one on your calendar; never invites |
 | 🌐 Time zones | "3 pm Eastern" | Nothing (your time and theirs) |
 | ✅ Task | "I'll send Sam the numbers by Friday" | Creates it in your task tool, or a local reminder if you have none |
-| 🔢 Fact | "What did we quote last time?" | Nothing (the answer, with its source) |
+| 🔎 Answer | "What did we quote last time?", "How big is their team?" | Nothing (the answer while the question is open, with its source: your mail, docs, sheets, CRM, notes or, if on, the web) |
 | 👤 Person | Someone in your notes or CRM comes up | Nothing (the one useful fact) |
 | ✉️ Follow-up (at the end) | The meeting had other people | Drafts the follow-up email; never sends it |
 
@@ -182,7 +185,7 @@ ProgramArguments are the kit's `.venv/bin/python` and `machete/listen.py`, with 
 
 ## Limits (true today)
 
-- Rare on purpose: about 6 cards an hour at most, none in the first 2 minutes. Less-sure items go on the end list.
+- Rare on purpose: about 6 cards an hour at most, none in the first 2 minutes except answers to questions asked out loud. Less-sure items go on the end list.
 - The transcript is a few seconds behind and mishears names; Machete checks names against your notes, the invite or
   the CRM before using them.
 - Not supported live: **Granola, Otter, Fireflies** and other cloud notetakers don't write a live transcript file on
@@ -733,8 +736,8 @@ Usage (from the kit folder):
     python machete/cards.py drop <id>                     # removes an open card
     python machete/cards.py clear [--keep-meeting <id>]   # drops open cards of other meetings
     python machete/cards.py list [--open]                 # JSON
-Kinds: date, slots (find a time), task, person, fact, timezone, prep, followup, reminder, consent, list, other.
-Information only (one OK button): person, fact, timezone, prep, reminder, consent, list.
+Kinds: answer, date, slots (find a time), task, person, fact, timezone, prep, followup, reminder, consent, list, other.
+Information only (one OK button): answer, person, fact, timezone, prep, reminder, consent, list.
 Store: data/cards.jsonl (append-only events).
 """
 from __future__ import annotations
@@ -753,9 +756,9 @@ from common import DATA as LIVE  # noqa: E402
 
 STORE = LIVE / "cards.jsonl"
 LOG = LIVE / "live.log"
-ICON = {"date": "📅", "slots": "🗓️", "task": "✅", "person": "👤", "fact": "🔢", "timezone": "🌐", "prep": "🗂️",
+ICON = {"answer": "🔎", "date": "📅", "slots": "🗓️", "task": "✅", "person": "👤", "fact": "🔢", "timezone": "🌐", "prep": "🗂️",
         "followup": "✉️", "reminder": "⏰", "consent": "🎙️", "list": "📋", "other": "💡"}
-INFO_ONLY = {"person", "fact", "timezone", "prep", "reminder", "consent", "list"}
+INFO_ONLY = {"answer", "person", "fact", "timezone", "prep", "reminder", "consent", "list"}
 SHOW_DONE = 25  # seconds a done card stays visible
 MAX_LINES = 3   # headline + 2
 MAX_LINKS = 3
@@ -1428,13 +1431,24 @@ Kinds (only those on in settings):
   in Asana?`. ✓ = create it in the task tool from settings through its connector; **if there is no task connector,
   a local reminder on this computer**: `python machete/remind.py add "YYYY-MM-DD HH:MM" "<task>"` (it pops up as a card
   at that time while the listener runs). Say which in the card (`Remind you Fri 10:00?`).
-- **fact** 🔢 Someone asks something you can find (a number, a date, what a doc or mail said, a CRM field, a sheet
-  cell). `Quoted: $48,000\nProposal v2, 3 Feb` with `--source "Q3 proposal (Drive)"`. Not found: no card. Information only.
+- **answer** 🔎 **The most valuable card: do these first.** Someone in the meeting asks a question, or the
+  conversation stalls on something nobody knows ("what did we quote them?", "did they ever reply?", "how many signed
+  up?", "what does the contract say about cancelling?", "how big is their team?", "what does their tool cost?").
+  Find the answer while the question is still open and show it, with where it came from:
+  - the user's own sources first, through their connectors and files: email, docs and Drive, sheets, the CRM, the
+    task tool, the calendar, the notes folder;
+  - then, if `Web lookups` is on in settings, the web for public facts (a company, a product, a price, a law, a
+    definition), with the page as the source.
+  Card: `Quoted: $48,000\nProposal v2, sent 3 Feb` with `--source "Q3 proposal (Drive)"` and a link to it. Give the
+  answer itself, not "I found a document". Not sure or not found: no card (note it on the end-of-meeting list).
+  Information only. A direct question may get its card at any time (the 2-minute spacing below doesn't hold it back),
+  but never answer the same question twice. Speed matters: one or two targeted lookups, not a long research session;
+  if it needs more, put "look into X" on the end-of-meeting list.
 - **person** 👤 Someone is mentioned who has a note in the user's notes or the CRM, and one fact would help now.
   `Sam Lee · Acme, finance\nPrefers numbers by email`. From the notes, never guessed. Information only.
 - **other** 💡 Rarely: anything else clearly useful with one tap.
 
-**Keep it rare** (and follow "Card rules" in settings): nothing in the first 2 minutes except the prep card, at most
+**Keep it rare** (and follow "Card rules" in settings): nothing in the first 2 minutes except the prep card and answers, at most
 one card every 2 minutes and about 6 an hour, never the same thing twice, only with a clear trigger plus a confirming
 sign (a future date, a known name, the user speaking or being spoken to). Anything less sure goes on the
 end-of-meeting list: append `{"kind","text","why"}` to `data/<meeting id>/candidates.jsonl`.
@@ -1447,7 +1461,9 @@ end-of-meeting list: append `{"kind","text","why"}` to `data/<meeting id>/candid
 ## Privacy (never break these)
 - The transcript goes nowhere but this session. The only thing that goes out is the single action the user tapped
   ✓ (an event, a task, a draft), with only the words that action needs. Never paste transcript text into any other
-  tool, chat, document or web search. Reading the user's own calendar, notes, CRM or docs to prepare a card is fine.
+  tool, chat or document. Reading the user's own calendar, notes, CRM, mail or docs to prepare a card is fine.
+- Web lookups (only if on in settings): short, neutral queries about public things (a company, product, price, law,
+  term). Never put quotes from the meeting, people's private details or anything confidential into a web search.
 - Drafts only: never send an email or chat message, never invite people.
 - Keep sensitive details (health, money, personal life) out of cards.
 - Write no transcript anywhere outside `data/`.

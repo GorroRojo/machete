@@ -58,13 +58,24 @@ Kinds (only those on in settings):
   in Asana?`. ✓ = create it in the task tool from settings through its connector; **if there is no task connector,
   a local reminder on this computer**: `python machete/remind.py add "YYYY-MM-DD HH:MM" "<task>"` (it pops up as a card
   at that time while the listener runs). Say which in the card (`Remind you Fri 10:00?`).
-- **fact** 🔢 Someone asks something you can find (a number, a date, what a doc or mail said, a CRM field, a sheet
-  cell). `Quoted: $48,000\nProposal v2, 3 Feb` with `--source "Q3 proposal (Drive)"`. Not found: no card. Information only.
+- **answer** 🔎 **The most valuable card: do these first.** Someone in the meeting asks a question, or the
+  conversation stalls on something nobody knows ("what did we quote them?", "did they ever reply?", "how many signed
+  up?", "what does the contract say about cancelling?", "how big is their team?", "what does their tool cost?").
+  Find the answer while the question is still open and show it, with where it came from:
+  - the user's own sources first, through their connectors and files: email, docs and Drive, sheets, the CRM, the
+    task tool, the calendar, the notes folder;
+  - then, if `Web lookups` is on in settings, the web for public facts (a company, a product, a price, a law, a
+    definition), with the page as the source.
+  Card: `Quoted: $48,000\nProposal v2, sent 3 Feb` with `--source "Q3 proposal (Drive)"` and a link to it. Give the
+  answer itself, not "I found a document". Not sure or not found: no card (note it on the end-of-meeting list).
+  Information only. A direct question may get its card at any time (the 2-minute spacing below doesn't hold it back),
+  but never answer the same question twice. Speed matters: one or two targeted lookups, not a long research session;
+  if it needs more, put "look into X" on the end-of-meeting list.
 - **person** 👤 Someone is mentioned who has a note in the user's notes or the CRM, and one fact would help now.
   `Sam Lee · Acme, finance\nPrefers numbers by email`. From the notes, never guessed. Information only.
 - **other** 💡 Rarely: anything else clearly useful with one tap.
 
-**Keep it rare** (and follow "Card rules" in settings): nothing in the first 2 minutes except the prep card, at most
+**Keep it rare** (and follow "Card rules" in settings): nothing in the first 2 minutes except the prep card and answers, at most
 one card every 2 minutes and about 6 an hour, never the same thing twice, only with a clear trigger plus a confirming
 sign (a future date, a known name, the user speaking or being spoken to). Anything less sure goes on the
 end-of-meeting list: append `{"kind","text","why"}` to `data/<meeting id>/candidates.jsonl`.
@@ -77,7 +88,9 @@ end-of-meeting list: append `{"kind","text","why"}` to `data/<meeting id>/candid
 ## Privacy (never break these)
 - The transcript goes nowhere but this session. The only thing that goes out is the single action the user tapped
   ✓ (an event, a task, a draft), with only the words that action needs. Never paste transcript text into any other
-  tool, chat, document or web search. Reading the user's own calendar, notes, CRM or docs to prepare a card is fine.
+  tool, chat or document. Reading the user's own calendar, notes, CRM, mail or docs to prepare a card is fine.
+- Web lookups (only if on in settings): short, neutral queries about public things (a company, product, price, law,
+  term). Never put quotes from the meeting, people's private details or anything confidential into a web search.
 - Drafts only: never send an email or chat message, never invite people.
 - Keep sensitive details (health, money, personal life) out of cards.
 - Write no transcript anywhere outside `data/`.
