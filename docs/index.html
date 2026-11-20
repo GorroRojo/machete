@@ -74,17 +74,16 @@ mark { color: var(--mark-ink); padding: 0 .18em; margin: 0 -.06em; border-radius
 .stage mark.pending { color: inherit; background-size: 0 82% }
 .stage mark { transition: background-size .5s cubic-bezier(.3, .7, .2, 1), color .2s .15s }
 
-/* the mark: a raised finger that is also an exclamation mark. It only ever tips up as one rigid piece. */
-.ojo { width: 26px; height: 26px; flex: none; overflow: visible }
+/* the mark: a hand with the index finger raised, a cheat sheet tucked in the cuff. Small sizes use the simplified
+   mark (.sm: hand over a red cuff). When a card lands the finger slides up out of the fist; nothing is scaled or rotated. */
+.ojo { width: 36px; height: 36px; flex: none }
 .ojo .f { fill: currentColor }
-.ojo .n, .ojo .d { fill: var(--red) }
-.ojo .fg, .ojo .d { transform-box: fill-box }
-.ojo .fg { transform-origin: 50% 100% }
-.ojo .d { transform-origin: 50% 50% }
-.ojo.raise .fg { animation: ojo-up .5s cubic-bezier(.3, .8, .3, 1) .12s both }
-.ojo.raise .d { animation: ojo-dot .35s both }
-@keyframes ojo-up { from { transform: rotate(22deg); opacity: .2 } to { transform: none; opacity: 1 } }
-@keyframes ojo-dot { from { opacity: 0 } to { opacity: 1 } }
+.ojo .n { fill: var(--red) }
+.ojo .pl { fill: none; stroke: #F4EFE4; stroke-width: 2.8; stroke-linecap: round }
+.ojo.raise .ix { animation: ojo-up .8s cubic-bezier(.35, .8, .4, 1) both }
+.ojo.raise .c { animation: ojo-cuff .35s ease-out .6s both }
+@keyframes ojo-up { 0%, 12% { transform: translateY(28px) } 26% { transform: translateY(32px) } 68% { transform: translateY(-5px) } 86% { transform: translateY(2px) } 100% { transform: none } }
+@keyframes ojo-cuff { 0%, 100% { transform: none } 45% { transform: translateY(3px) } }
 
 /* hero */
 .hero { --band: var(--hero); color: var(--hero-ink); padding-block: 0 clamp(40px, 6vw, 72px) }
@@ -241,7 +240,7 @@ footer { padding-block: 26px 40px; font-size: 14.5px; color: var(--muted); displ
 }
 @media (prefers-reduced-motion: reduce) {
   html { scroll-behavior: auto }
-  .pop, .ojo.raise .fg, .ojo.raise .d { animation: none }
+  .pop, .ojo.raise .ix, .ojo.raise .c { animation: none }
   .stage mark { transition: none }
 }
 </style>
@@ -250,7 +249,7 @@ footer { padding-block: 26px 40px; font-size: 14.5px; color: var(--muted); displ
 
 <header class="hero band">
   <div class="top">
-    <span class="logo"><svg class="ojo" viewBox="0 0 64 64" aria-hidden="true" focusable="false"><g class="fg"><rect class="f" x="24" y="3" width="16" height="40" rx="8"/><rect class="n" x="28" y="7" width="8" height="10" rx="3.5"/></g><circle class="d" cx="32" cy="54" r="7.5"/></svg>Machete</span>
+    <span class="logo"><svg class="ojo" viewBox="4 1 124 124" aria-hidden="true" focusable="false"><g transform="translate(16 2) scale(.72)"><rect class="f" x="42" y="6" width="18" height="76" rx="9"/><rect class="n" x="46.5" y="10" width="9" height="12" rx="4.5"/><path class="f" d="M42 52H60V47a9 9 0 0 1 18 0V52.5a8.5 8.5 0 0 1 17 0V59.5a7.5 7.5 0 0 1 15 0V84C110 104 96 114 78 114H56C46 114 37 108 32.8 99.4L16.8 65.4A8 8 0 0 1 31.2 58.6L40 77.5Q42 81 42 75Z"/><rect class="f" x="50" y="100" width="42" height="34"/></g><g transform="rotate(12 90 98)"><rect class="n" x="77.5" y="57.5" width="24" height="41" rx="3.5"/><path class="pl" d="M84 67H95M84 74H95M84 81H91"/></g><rect class="f" x="44" y="92" width="56" height="12" rx="4.5"/><path class="f" d="M45 108H99L104.5 121H39.5Z"/></svg>Machete</span>
     <nav aria-label="Sections">
       <a href="#said">What it catches</a>
       <a href="#rules">The rules</a>
@@ -283,7 +282,7 @@ footer { padding-block: 26px 40px; font-size: 14.5px; color: var(--muted); displ
           <button class="tiny" id="replay" type="button" hidden>Play it again</button>
         </div>
         <div class="win" role="img" aria-label="The Machete window with two answer cards: quoted 48,000 dollars, from Proposal v2 in your Drive; and yes, a Dublin office, from their About page.">
-          <div class="head"><span class="wm"><svg class="ojo" id="ojoHero" viewBox="0 0 64 64" aria-hidden="true" focusable="false"><g class="fg"><rect class="f" x="24" y="3" width="16" height="40" rx="8"/><rect class="n" x="28" y="7" width="8" height="10" rx="3.5"/></g><circle class="d" cx="32" cy="54" r="7.5"/></svg>Machete</span><span aria-hidden="true">✕</span></div>
+          <div class="head"><span class="wm"><svg class="ojo sm" id="ojoHero" viewBox="1 2 120 120" aria-hidden="true" focusable="false"><g transform="translate(9 2) scale(.82)"><g class="ix"><rect class="f" x="42" y="6" width="18" height="76" rx="9"/></g><path class="f" d="M42 52H60V47a9 9 0 0 1 18 0V52.5a8.5 8.5 0 0 1 17 0V59.5a7.5 7.5 0 0 1 15 0V84C110 104 96 114 78 114H56C46 114 37 108 32.8 99.4L16.8 65.4A8 8 0 0 1 31.2 58.6L40 77.5Q42 81 42 75Z"/></g><rect class="n c" x="42" y="101" width="50" height="16" rx="5.5"/></svg>Machete</span><span aria-hidden="true">✕</span></div>
           <div class="card" id="c1"><div class="h"><span aria-hidden="true">🔎</span><span>Quoted: $48,000</span></div><div class="l">Proposal v2, sent 14 Mar</div><div class="src">Northwind proposal (Drive)</div><div class="links"><span>Proposal v2</span><span>Email thread</span></div></div>
           <div class="card" id="c2"><div class="h"><span aria-hidden="true">🔎</span><span>Yes: Dublin office</span></div><div class="l">EU entity since 2023</div><div class="src">northwind.example/about</div><div class="links"><span>About page</span></div></div>
         </div>
@@ -418,7 +417,7 @@ footer { padding-block: 26px 40px; font-size: 14.5px; color: var(--muted); displ
 </main>
 
 <footer>
-  <span class="foot-mark"><svg class="ojo" viewBox="0 0 64 64" aria-hidden="true" focusable="false"><g class="fg"><rect class="f" x="24" y="3" width="16" height="40" rx="8"/><rect class="n" x="28" y="7" width="8" height="10" rx="3.5"/></g><circle class="d" cx="32" cy="54" r="7.5"/></svg>Machete, a live meeting copilot. Built with Claude Code.</span>
+  <span class="foot-mark"><svg class="ojo sm" viewBox="1 2 120 120" aria-hidden="true" focusable="false"><g transform="translate(9 2) scale(.82)"><g class="ix"><rect class="f" x="42" y="6" width="18" height="76" rx="9"/></g><path class="f" d="M42 52H60V47a9 9 0 0 1 18 0V52.5a8.5 8.5 0 0 1 17 0V59.5a7.5 7.5 0 0 1 15 0V84C110 104 96 114 78 114H56C46 114 37 108 32.8 99.4L16.8 65.4A8 8 0 0 1 31.2 58.6L40 77.5Q42 81 42 75Z"/></g><rect class="n c" x="42" y="101" width="50" height="16" rx="5.5"/></svg>Machete, a live meeting copilot. Built with Claude Code.</span>
   <span>Nothing acts without your ✓. <a href="https://github.com/GorroRojo/machete" target="_blank" rel="noopener">Code on GitHub</a></span>
 </footer>
 
