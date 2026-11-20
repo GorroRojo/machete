@@ -171,6 +171,41 @@ def work_area(root) -> tuple[int, int, int, int]:
     return 0, 0, root.winfo_screenwidth(), root.winfo_screenheight() - 60
 
 
+LOGO_RED = "#E5322D"
+LOGO_TIPUP = (22, 15, 9, 3, -2, -3, -1, 0)  # degrees, one frame each: the finger tips up as one rigid piece
+
+
+def logo_shapes(angle: float, size: int) -> tuple[list[float], list[float]]:
+    """The mark's bar and nail (two plain pills) as canvas polygons (assets/machete-logo.svg), rotated around the finger's base.
+    Rotation only: the finger never stretches or changes size."""
+    import math
+    k, (cx, cy) = size / 64, (32, 43)
+    co, si = math.cos(math.radians(angle)), math.sin(math.radians(angle))
+
+    def pill(left: float, top: float, right: float, bottom: float, r: float) -> list[float]:
+        pts = []
+        for ccx, ccy, start in ((left + r, top + r, 2), (right - r, top + r, 3), (right - r, bottom - r, 0), (left + r, bottom - r, 1)):
+            pts += [(ccx + r * math.cos(math.pi / 2 * (start + i / 6)), ccy + r * math.sin(math.pi / 2 * (start + i / 6)))
+                    for i in range(7)]
+        out: list[float] = []
+        for x, y in pts:
+            dx, dy = x - cx, y - cy
+            out += [(cx + dx * co - dy * si) * k, (cy + dx * si + dy * co) * k]
+        return out
+    return pill(24, 3, 40, 43, 8), pill(28, 7, 36, 17, 3.5)
+
+
+def draw_logo(canvas, size: int, angle: float = 0, dot: float = 1.0) -> None:
+    """dot: 0 hides the red dot, 1 is full size (only the dot may pop)."""
+    canvas.delete("all")
+    finger, nail = logo_shapes(angle, size)
+    canvas.create_polygon(finger, fill="#F4EFE4", outline="")
+    canvas.create_polygon(nail, fill=LOGO_RED, outline="")
+    if dot > 0:
+        k, r = size / 64, 7.5 * dot
+        canvas.create_oval((32 - r) * k, (54 - r) * k, (32 + r) * k, (54 + r) * k, fill=LOGO_RED, outline="")
+
+
 def window(capturable: bool = False, on_ready=None) -> None:
     """capturable=True: a copy screenshots can see (tests). on_ready(root, frame): called once drawn (tests)."""
     if IS_WIN:
@@ -217,6 +252,21 @@ def window(capturable: bool = False, on_ready=None) -> None:
     moved: list = [None]
     grab = {"x": 0, "y": 0}
     WIDTH = 400
+    LOGO = 26  # px, the mark in the header
+    newest: list = [max(cards(), default=0)]  # a card above this id is new: the mark tips up
+    root.logo_plays = 0  # tests read this
+
+    def play_logo(canvas, frame_no: int = 0) -> None:
+        if not canvas.winfo_exists():  # the header was redrawn meanwhile
+            return
+        if frame_no < len(LOGO_TIPUP):
+            draw_logo(canvas, LOGO, LOGO_TIPUP[frame_no], dot=0)
+            root.after(40, play_logo, canvas, frame_no + 1)
+        elif frame_no == len(LOGO_TIPUP):
+            draw_logo(canvas, LOGO, 0, dot=1.15)  # the dot pops in
+            root.after(70, play_logo, canvas, frame_no + 1)
+        else:
+            draw_logo(canvas, LOGO, 0)
 
     def drag_start(e) -> None:
         grab.update(x=e.x_root - root.winfo_x(), y=e.y_root - root.winfo_y())
@@ -271,7 +321,17 @@ def window(capturable: bool = False, on_ready=None) -> None:
             return
         bar = tk.Frame(frame, bg=BG)
         bar.pack(fill="x")
+        mark = tk.Canvas(bar, width=LOGO, height=LOGO, bg=BG, highlightthickness=0, bd=0)
+        mark.pack(side="left", padx=(0, 0))
         tk.Label(bar, text="Machete", bg=BG, fg=DIM, font=(FONT, 9)).pack(side="left", padx=(2, 0))
+        top = max(c["id"] for c in visible)
+        if top > newest[0]:  # a new card landed
+            newest[0] = top
+            root.logo_plays += 1
+            draw_logo(mark, LOGO, LOGO_TIPUP[0], dot=0)
+            root.after(120, play_logo, mark)
+        else:
+            draw_logo(mark, LOGO)
         x = tk.Button(bar, text="✕", command=closed, font=(FONT, 10), relief="flat", bd=0, cursor="hand2", padx=6,
                       pady=0, bg=BG, fg=DIM, activebackground="#3c3c46", activeforeground=FG)
         x.pack(side="right")

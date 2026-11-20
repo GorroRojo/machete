@@ -1,25 +1,20 @@
 <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 64 64" role="img" aria-label="Machete: a raised finger that is also an exclamation mark">
   <style>
-    /* The finger moves as one rigid piece: it tips up into place like a raised hand. It never stretches or grows. */
-    .finger { transform-box: fill-box; transform-origin: 50% 100%; animation: tipup 4s cubic-bezier(.3,.8,.3,1) infinite }
-    .dot { transform-box: fill-box; transform-origin: 50% 50%; animation: dotin 4s ease-out infinite }
+    /* Rigid tip-up: the finger rotates as one piece around its base. It never stretches, grows or pulses. */
+    .mch-finger { transform-box: fill-box; transform-origin: 50% 100%; animation: tipup 4.5s cubic-bezier(.3,.8,.3,1) infinite }
+    .mch-dot { transform-box: fill-box; transform-origin: 50% 50%; animation: dotin 4.5s ease-out infinite }
     @keyframes tipup {
-      0%, 6% { transform: rotate(22deg); opacity: 0 }
+      0%, 8% { transform: rotate(22deg); opacity: 0 }
       18% { transform: rotate(-3deg); opacity: 1 }
-      24%, 80% { transform: none; opacity: 1 }
-      92%, 100% { transform: rotate(22deg); opacity: 0 }
+      23%, 84% { transform: none; opacity: 1 }
+      94%, 100% { transform: rotate(22deg); opacity: 0 }
     }
     @keyframes dotin {
-      0% { transform: scale(.4); opacity: 0 }
-      6% { transform: scale(1.1); opacity: 1 }
-      10%, 92% { transform: scale(1); opacity: 1 }
+      0%, 2% { transform: scale(.4); opacity: 0 }
+      8% { transform: scale(1.12); opacity: 1 }
+      12%, 92% { transform: scale(1); opacity: 1 }
       100% { transform: scale(.4); opacity: 0 }
     }
-    @media (prefers-reduced-motion: reduce) { .finger, .dot { animation: none } }
-  </style>
-  <g class="finger">
-    <rect x="24" y="3" width="16" height="40" rx="8" fill="#1B1B1B"/>
-    <rect x="28" y="7" width="8" height="10" rx="3.5" fill="#E5322D"/>
-  </g>
-  <circle class="dot" cx="32" cy="54" r="7.5" fill="#E5322D"/>
-</svg>
+    @media (prefers-reduced-motion: reduce) { .mch-finger, .mch-dot { animation: none } }
+  </style><style>.mch-finger>rect:first-child{fill:#1B1B1B}@media (prefers-color-scheme: dark){.mch-finger>rect:first-child{fill:#F4EFE4}}</style>
+  <g class="mch-finger"><rect x="24" y="3" width="16" height="40" rx="8" fill="#1B1B1B"/><rect x="28" y="7" width="8" height="10" rx="3.5" fill="#E5322D"/></g><circle class="mch-dot" cx="32" cy="54" r="7.5" fill="#E5322D"/></svg>

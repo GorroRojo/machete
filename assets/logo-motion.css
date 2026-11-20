@@ -1,0 +1,85 @@
+/* Machete logo motion
+   ====================
+   Markup (inline SVG, so the parts can move):
+
+     <svg class="mch-logo" viewBox="0 0 64 64" width="32" height="32" aria-hidden="true">
+       <g class="mch-finger"> …the two <rect>s (bar and nail) from machete-logo.svg… </g>
+       <circle class="mch-dot" cx="32" cy="54" r="7.5" fill="#E5322D"/>
+     </svg>
+
+   Add ONE of these classes to the <svg>:
+
+     .mch-landed   "card landed": the finger tips up into place as one rigid piece, then the dot pops in.
+                   Plays once (0.6 s). Use when a new card arrives.
+     .mch-looking  "looking it up": the dot blinks like a text cursor while a search runs. Loops; the finger stays still.
+     .mch-headsup  "heads-up": two quick rigid tilts from the base (the "¡ojo!" finger wag) and the dot flashes.
+                   Plays once (0.7 s). Use for a heads-up nobody asked for.
+     .mch-loop     README / hero loop, kept calm: tip up, hold, tip away. 4.5 s, loops.
+
+   Replay a one-shot from JS:  el.classList.remove('mch-landed'); void el.getBoundingClientRect(); el.classList.add('mch-landed');
+
+   Rules these keep (do not break them in new motions): the finger only ROTATES around its base, as one rigid
+   piece. It never stretches, grows, throbs, pulses in size or bends at the tip. Only the dot may scale or blink.
+   The mark itself stays abstract: a pill, a nail, a dot. Never add anatomy (creases, knuckles, shading).
+   With prefers-reduced-motion everything is still, and .mch-looking shows a dimmed dot instead of blinking. */
+
+.mch-logo { overflow: visible }
+.mch-logo .mch-finger { transform-box: fill-box; transform-origin: 50% 100% }
+.mch-logo .mch-dot { transform-box: fill-box; transform-origin: 50% 50% }
+
+/* card landed */
+.mch-landed .mch-finger { animation: mch-tipup .42s cubic-bezier(.3, .8, .3, 1) both }
+.mch-landed .mch-dot { animation: mch-dotpop .26s ease-out .34s both }
+@keyframes mch-tipup {
+  0% { transform: rotate(22deg); opacity: 0 }
+  70% { transform: rotate(-3deg); opacity: 1 }
+  100% { transform: none; opacity: 1 }
+}
+@keyframes mch-dotpop {
+  0% { transform: scale(.4); opacity: 0 }
+  60% { transform: scale(1.14); opacity: 1 }
+  100% { transform: none; opacity: 1 }
+}
+
+/* looking it up */
+.mch-looking .mch-dot { animation: mch-blink 1.06s steps(1, end) infinite }
+@keyframes mch-blink {
+  0%, 55% { opacity: 1 }
+  56%, 100% { opacity: .15 }
+}
+
+/* heads-up */
+.mch-headsup .mch-finger { animation: mch-wag .7s cubic-bezier(.35, 0, .25, 1) both }
+.mch-headsup .mch-dot { animation: mch-flash .7s linear both }
+@keyframes mch-wag {
+  0%, 100% { transform: none }
+  18% { transform: rotate(13deg) }
+  40% { transform: rotate(-2deg) }
+  62% { transform: rotate(13deg) }
+  86% { transform: rotate(-1deg) }
+}
+@keyframes mch-flash {
+  0%, 30%, 52%, 100% { opacity: 1 }
+  18%, 62% { opacity: .35 }
+}
+
+/* README / hero loop */
+.mch-loop .mch-finger { animation: mch-loop-finger 4.5s cubic-bezier(.3, .8, .3, 1) infinite }
+.mch-loop .mch-dot { animation: mch-loop-dot 4.5s ease-out infinite }
+@keyframes mch-loop-finger {
+  0%, 8% { transform: rotate(22deg); opacity: 0 }
+  18% { transform: rotate(-3deg); opacity: 1 }
+  23%, 84% { transform: none; opacity: 1 }
+  94%, 100% { transform: rotate(22deg); opacity: 0 }
+}
+@keyframes mch-loop-dot {
+  0%, 2% { transform: scale(.4); opacity: 0 }
+  8% { transform: scale(1.12); opacity: 1 }
+  12%, 92% { transform: none; opacity: 1 }
+  100% { transform: scale(.4); opacity: 0 }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .mch-logo .mch-finger, .mch-logo .mch-dot { animation: none !important }
+  .mch-looking .mch-dot { opacity: .45 }
+}
