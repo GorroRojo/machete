@@ -1,3 +1,5 @@
+<p align="left"><img src="assets/machete-logo-animated.svg" width="88" alt="Machete logo: a raised finger that is also an exclamation mark"></p>
+
 # Machete: a live meeting copilot for Claude Code
 
 Machete listens to the meeting you're in and, a few times an hour, offers to save you a step: a small card in the
