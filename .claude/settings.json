@@ -1,0 +1,17 @@
+{
+  "permissions": {
+    "allow": [
+      "Read",
+      "Glob",
+      "Grep",
+      "Bash(python machete/cards.py:*)",
+      "Bash(python machete/remind.py:*)",
+      "Bash(python -u machete/follow.py:*)",
+      "PowerShell(python machete/cards.py:*)",
+      "PowerShell(python machete/remind.py:*)",
+      "PowerShell(python -u machete/follow.py:*)",
+      "Write(data/**)",
+      "Edit(data/**)"
+    ]
+  }
+}

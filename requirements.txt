@@ -1,0 +1,5 @@
+# Wispr Flow and file sources need nothing beyond Python 3.11+ with tkinter.
+# Only the audio source (mic + computer sound transcribed on this PC) needs these:
+faster-whisper>=1.0
+soundcard>=0.4
+numpy
