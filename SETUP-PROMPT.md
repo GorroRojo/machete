@@ -87,7 +87,7 @@ Plain English. Change anything, save, and it applies from the next meeting. The 
 - Only with a clear trigger plus a confirming sign; anything less sure goes on the end-of-meeting list.
 - Headline 2 to 5 words; at most two short lines under it; the source small at the bottom.
 - Cards in the meeting's language (or always in: ________).
-- Card kinds on: answer, date, find a time, task, person, time zones, prep at start, follow-up email at end
+- Card kinds on: answer, heads-up, date, find a time, task, person, time zones, prep at start, follow-up email at end
   (delete any you don't want).
 - Work hours for "find a time" offers: 9:00 to 18:00 on weekdays.
 
@@ -115,6 +115,7 @@ Cards it can offer:
 | 🗓️ Find a time | "Let's find a time for all of us" | Drafts 2-3 free slots as options, or holds one on your calendar; never invites |
 | 🌐 Time zones | "3 pm Eastern" | Nothing (your time and theirs) |
 | ✅ Task | "I'll send Sam the numbers by Friday" | Creates it in your task tool, or a local reminder if you have none |
+| ⚡ Heads-up | The meeting is discussing something with news that matters now (a reply minutes ago, a due invoice, today's news about the company) | Nothing (the fact, with a link to it) |
 | 🔎 Answer | "What did we quote last time?", "How big is their team?" | Nothing (the answer while the question is open, with its source: your mail, docs, sheets, CRM, notes or, if on, the web) |
 | 👤 Person | Someone in your notes or CRM comes up | Nothing (the one useful fact) |
 | ✉️ Follow-up (at the end) | The meeting had other people | Drafts the follow-up email; never sends it |
@@ -142,6 +143,7 @@ At the end you also get a short report with an end-of-meeting checklist.
 
 - **Claude Code** with a Claude subscription (Pro or Max) or API access, recent enough to have the Monitor tool.
 - **Python 3.11+** with tkinter (included in the python.org installers).
+- **git**, or Claude Code downloads the zip instead.
 - **A transcript source**: Wispr Flow, a tool that writes a live transcript file, or the audio option
   (`pip install -r requirements.txt` into the kit's `.venv`; a GPU helps but isn't required).
 - Windows 10/11 is tested. macOS and Linux: the code is written to run there, but **untested**; the audio option
@@ -149,9 +151,18 @@ At the end you also get a short report with an end-of-meeting checklist.
 
 ## Setup
 
-Paste `SETUP-PROMPT.md` into Claude Code. It asks you five short questions (recorder, calendar, task tool, where your
-notes live, language), writes the files, installs what's needed, registers the background listener, runs a fake
-meeting to test it, and shows you a first card.
+Open Claude Code and paste this:
+
+```
+Set up Machete for me. Clone https://github.com/GorroRojo/machete into my home folder (if git isn't installed,
+download https://github.com/GorroRojo/machete/archive/refs/heads/main.zip and unzip it there instead), then open
+SETUP.md in that folder and follow it step by step.
+```
+
+It asks you five short questions (recorder, calendar, task tool, where your notes live, language), installs what's
+needed, registers the background listener, runs a fake meeting to test it, and shows you a first card.
+
+No git and no internet for Claude Code? `SETUP-PROMPT.md` is the same kit as one long prompt, with every file inside.
 
 By hand: copy this folder anywhere, fill in `settings.md`, then
 
@@ -736,8 +747,8 @@ Usage (from the kit folder):
     python machete/cards.py drop <id>                     # removes an open card
     python machete/cards.py clear [--keep-meeting <id>]   # drops open cards of other meetings
     python machete/cards.py list [--open]                 # JSON
-Kinds: answer, date, slots (find a time), task, person, fact, timezone, prep, followup, reminder, consent, list, other.
-Information only (one OK button): answer, person, fact, timezone, prep, reminder, consent, list.
+Kinds: answer, headsup, date, slots (find a time), task, person, fact, timezone, prep, followup, reminder, consent, list, other.
+Information only (one OK button): answer, headsup, person, fact, timezone, prep, reminder, consent, list.
 Store: data/cards.jsonl (append-only events).
 """
 from __future__ import annotations
@@ -756,9 +767,9 @@ from common import DATA as LIVE  # noqa: E402
 
 STORE = LIVE / "cards.jsonl"
 LOG = LIVE / "live.log"
-ICON = {"answer": "🔎", "date": "📅", "slots": "🗓️", "task": "✅", "person": "👤", "fact": "🔢", "timezone": "🌐", "prep": "🗂️",
+ICON = {"answer": "🔎", "headsup": "⚡", "heads-up": "⚡", "date": "📅", "slots": "🗓️", "task": "✅", "person": "👤", "fact": "🔢", "timezone": "🌐", "prep": "🗂️",
         "followup": "✉️", "reminder": "⏰", "consent": "🎙️", "list": "📋", "other": "💡"}
-INFO_ONLY = {"answer", "person", "fact", "timezone", "prep", "reminder", "consent", "list"}
+INFO_ONLY = {"answer", "headsup", "heads-up", "person", "fact", "timezone", "prep", "reminder", "consent", "list"}
 SHOW_DONE = 25  # seconds a done card stays visible
 MAX_LINES = 3   # headline + 2
 MAX_LINKS = 3
@@ -1415,8 +1426,18 @@ names above all: check a name against the user's notes, the invite or the CRM be
 - The **headline** is the answer or the action in 2 to 5 words; it shows big. At most two short lines under it, only
   if they help act. The source goes in `--source`, never in the text. The meeting's language unless settings say
   otherwise.
+- **Link the source, every time there is one.** Any card built from something you read gets `--link` to it: the
+  email thread, the doc, the sheet, the CRM record, the calendar event, the web page (up to 3, best first; label 1 to
+  3 words, never the raw URL). The user should be able to open the proof with one click while they talk.
 
 Kinds (only those on in settings):
+- **heads-up** ⚡ Nobody asked, but something the meeting is talking about has a fact the user would want right now,
+  and that the room may not know: a reply that arrived minutes ago in the thread being discussed, a deadline or due
+  invoice for the client on the call, a clash with something already promised, today's news about the company or
+  product being discussed, a changed price or policy on a public page. Card: `Acme replied 10 min ago\nThey accepted
+  the March start` with `--source "your email"` and a link to it. Only when it clearly matters to what is being
+  decided now, at most about one every 10 minutes, never a guess, never filler. Check quietly as topics come up
+  (one quick lookup in the user's sources, then the web if on); no card if nothing important turns up.
 - **date** 📅 A date or time said for something to happen. Work out the exact date and time and check the calendar
   for a clash. `Thu 12 Mar · 15:00\nQ3 review with Sam\nAdd it? You're free` (or `Clashes with team sync`).
   ✓ = create the event in the user's calendar (no invitations sent to others).

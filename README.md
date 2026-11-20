@@ -13,6 +13,7 @@ Cards it can offer:
 | 🗓️ Find a time | "Let's find a time for all of us" | Drafts 2-3 free slots as options, or holds one on your calendar; never invites |
 | 🌐 Time zones | "3 pm Eastern" | Nothing (your time and theirs) |
 | ✅ Task | "I'll send Sam the numbers by Friday" | Creates it in your task tool, or a local reminder if you have none |
+| ⚡ Heads-up | The meeting is discussing something with news that matters now (a reply minutes ago, a due invoice, today's news about the company) | Nothing (the fact, with a link to it) |
 | 🔎 Answer | "What did we quote last time?", "How big is their team?" | Nothing (the answer while the question is open, with its source: your mail, docs, sheets, CRM, notes or, if on, the web) |
 | 👤 Person | Someone in your notes or CRM comes up | Nothing (the one useful fact) |
 | ✉️ Follow-up (at the end) | The meeting had other people | Drafts the follow-up email; never sends it |
@@ -40,6 +41,7 @@ At the end you also get a short report with an end-of-meeting checklist.
 
 - **Claude Code** with a Claude subscription (Pro or Max) or API access, recent enough to have the Monitor tool.
 - **Python 3.11+** with tkinter (included in the python.org installers).
+- **git**, or Claude Code downloads the zip instead.
 - **A transcript source**: Wispr Flow, a tool that writes a live transcript file, or the audio option
   (`pip install -r requirements.txt` into the kit's `.venv`; a GPU helps but isn't required).
 - Windows 10/11 is tested. macOS and Linux: the code is written to run there, but **untested**; the audio option
@@ -47,9 +49,18 @@ At the end you also get a short report with an end-of-meeting checklist.
 
 ## Setup
 
-Paste `SETUP-PROMPT.md` into Claude Code. It asks you five short questions (recorder, calendar, task tool, where your
-notes live, language), writes the files, installs what's needed, registers the background listener, runs a fake
-meeting to test it, and shows you a first card.
+Open Claude Code and paste this:
+
+```
+Set up Machete for me. Clone https://github.com/GorroRojo/machete into my home folder (if git isn't installed,
+download https://github.com/GorroRojo/machete/archive/refs/heads/main.zip and unzip it there instead), then open
+SETUP.md in that folder and follow it step by step.
+```
+
+It asks you five short questions (recorder, calendar, task tool, where your notes live, language), installs what's
+needed, registers the background listener, runs a fake meeting to test it, and shows you a first card.
+
+No git and no internet for Claude Code? `SETUP-PROMPT.md` is the same kit as one long prompt, with every file inside.
 
 By hand: copy this folder anywhere, fill in `settings.md`, then
 

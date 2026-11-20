@@ -47,7 +47,7 @@ Plain English. Change anything, save, and it applies from the next meeting. The 
 - Only with a clear trigger plus a confirming sign; anything less sure goes on the end-of-meeting list.
 - Headline 2 to 5 words; at most two short lines under it; the source small at the bottom.
 - Cards in the meeting's language (or always in: ________).
-- Card kinds on: answer, date, find a time, task, person, time zones, prep at start, follow-up email at end
+- Card kinds on: answer, heads-up, date, find a time, task, person, time zones, prep at start, follow-up email at end
   (delete any you don't want).
 - Work hours for "find a time" offers: 9:00 to 18:00 on weekdays.
 

@@ -18,8 +18,8 @@ Usage (from the kit folder):
     python machete/cards.py drop <id>                     # removes an open card
     python machete/cards.py clear [--keep-meeting <id>]   # drops open cards of other meetings
     python machete/cards.py list [--open]                 # JSON
-Kinds: answer, date, slots (find a time), task, person, fact, timezone, prep, followup, reminder, consent, list, other.
-Information only (one OK button): answer, person, fact, timezone, prep, reminder, consent, list.
+Kinds: answer, headsup, date, slots (find a time), task, person, fact, timezone, prep, followup, reminder, consent, list, other.
+Information only (one OK button): answer, headsup, person, fact, timezone, prep, reminder, consent, list.
 Store: data/cards.jsonl (append-only events).
 """
 from __future__ import annotations
@@ -38,9 +38,9 @@ from common import DATA as LIVE  # noqa: E402
 
 STORE = LIVE / "cards.jsonl"
 LOG = LIVE / "live.log"
-ICON = {"answer": "🔎", "date": "📅", "slots": "🗓️", "task": "✅", "person": "👤", "fact": "🔢", "timezone": "🌐", "prep": "🗂️",
+ICON = {"answer": "🔎", "headsup": "⚡", "heads-up": "⚡", "date": "📅", "slots": "🗓️", "task": "✅", "person": "👤", "fact": "🔢", "timezone": "🌐", "prep": "🗂️",
         "followup": "✉️", "reminder": "⏰", "consent": "🎙️", "list": "📋", "other": "💡"}
-INFO_ONLY = {"answer", "person", "fact", "timezone", "prep", "reminder", "consent", "list"}
+INFO_ONLY = {"answer", "headsup", "heads-up", "person", "fact", "timezone", "prep", "reminder", "consent", "list"}
 SHOW_DONE = 25  # seconds a done card stays visible
 MAX_LINES = 3   # headline + 2
 MAX_LINKS = 3
