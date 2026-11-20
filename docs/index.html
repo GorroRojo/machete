@@ -1,0 +1,469 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>Machete</title>
+<meta name="description" content="A live meeting copilot for Claude Code: when a question is asked in your meeting, the answer shows up in the corner of your screen, with its source, while the question is still open. Free and open source.">
+<meta property="og:title" content="Machete: the answer while the question is still open">
+<meta property="og:description" content="A live meeting copilot for Claude Code: when a question is asked in your meeting, the answer shows up in the corner of your screen, with its source, while the question is still open. Free and open source.">
+<meta property="og:type" content="website">
+<meta property="og:url" content="https://gorrorojo.github.io/machete/">
+<meta property="og:image" content="https://gorrorojo.github.io/machete/favicon-512.png">
+<meta name="twitter:card" content="summary">
+<link rel="icon" type="image/png" sizes="32x32" href="favicon-32.png">
+<link rel="icon" type="image/png" sizes="16x16" href="favicon-16.png">
+<link rel="apple-touch-icon" href="favicon-180.png">
+<style>:root{padding-top:env(safe-area-inset-top,0px);padding-bottom:env(safe-area-inset-bottom,0px)}body{margin:0;font:14px/1.4 system-ui,sans-serif}img{max-width:100%}[hidden]{display:none!important}</style>
+</head>
+<body>
+<meta name="claude:viewport-fit-sides" content="cover">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Archivo:wdth,wght@62..125,400..900&family=IBM+Plex+Mono:wght@400;500&display=swap">
+<style>
+/* Direction: a cheat sheet and a highlighter. Archivo at two widths, a mono for anything the machine heard or
+   wrote, highlighter yellow for the moment Machete notices something, and a dark caption stage where a meeting
+   is in progress. Red lives only in the logo and the recording dot. */
+:root {
+  --bg: #f1f3f6; --surface: #ffffff; --ink: #14172b; --muted: #535872; --line: #d3d7e1; --accent: #1d3fc4;
+  --mark: #ffe14d; --mark-ink: #14172b;
+  --hero: #ffe14d; --hero-ink: #14172b; --hero-soft: #3f3c1c;
+  --slab: #14172b; --slab-ink: #f2f3fa; --slab-muted: #b1b6cf; --slab-line: #30345a;
+  --cap: #0f1014; --cap-ink: #ffffff; --cap-soft: #9096a6; --cap-line: #262933;
+  --win: #23263b; --win-card: #2f3249; --win-ink: #f3f4fb; --win-muted: #a6aac4; --win-link: #9dbcf7;
+  --ok: #8fb3f5; --ok-ink: #10142a; --no: #474a63; --red: #e5322d;
+  --sans: "Archivo", "Segoe UI", "Helvetica Neue", Arial, sans-serif;
+  --mono: "IBM Plex Mono", Consolas, "SF Mono", ui-monospace, monospace;
+}
+@media (prefers-color-scheme: dark) { :root:not([data-theme="light"]) {
+  --bg: #0f111d; --surface: #181b2b; --ink: #eceef7; --muted: #a4a9c2; --line: #2a2e44; --accent: #9dbcf7;
+  --slab: #1a1d31; --slab-line: #343960; --cap: #07080b;
+  --win: #272b44; --win-card: #343852; --no: #4c5070;
+  color-scheme: dark;
+} }
+:root[data-theme="dark"] {
+  --bg: #0f111d; --surface: #181b2b; --ink: #eceef7; --muted: #a4a9c2; --line: #2a2e44; --accent: #9dbcf7;
+  --slab: #1a1d31; --slab-line: #343960; --cap: #07080b;
+  --win: #272b44; --win-card: #343852; --no: #4c5070;
+  color-scheme: dark;
+}
+
+* { box-sizing: border-box }
+html { scroll-behavior: smooth }
+body {
+  margin: 0; background: var(--bg); color: var(--ink); font: 400 17px/1.55 var(--sans);
+  padding-left: max(16px, env(safe-area-inset-left, 0px)); padding-right: max(16px, env(safe-area-inset-right, 0px));
+  -webkit-text-size-adjust: 100%; overflow-x: hidden;
+}
+.wrap { max-width: 1120px; margin: 0 auto }
+.band { box-shadow: 0 0 0 100vmax var(--band); clip-path: inset(0 -100vmax); background: var(--band) }
+h1, h2, h3, p, ul, ol, dl, dd { margin: 0 }
+h1, h2 { font-stretch: 70%; font-weight: 800; letter-spacing: -0.012em; text-wrap: balance }
+h2 { font-size: clamp(34px, 5vw, 58px); line-height: 1 }
+h3 { font-size: 19px; font-weight: 700; line-height: 1.25 }
+a { color: var(--accent); text-underline-offset: 3px }
+.lead { font-size: clamp(18px, 1.7vw, 20px); color: var(--muted); max-width: 60ch; margin-top: 16px }
+.mono { font-family: var(--mono) }
+:focus-visible { outline: 3px solid var(--accent); outline-offset: 3px; border-radius: 3px }
+.hero :focus-visible, .setup :focus-visible { outline-color: var(--hero-ink) }
+section { padding-block: clamp(48px, 7vw, 88px) }
+
+mark { color: var(--mark-ink); padding: 0 .18em; margin: 0 -.06em; border-radius: 2px;
+  background: linear-gradient(var(--mark), var(--mark)) no-repeat 0 55% / 100% 82% }
+.stage mark.pending { color: inherit; background-size: 0 82% }
+.stage mark { transition: background-size .5s cubic-bezier(.3, .7, .2, 1), color .2s .15s }
+
+/* the mark: a raised finger that is also an exclamation mark. It only ever tips up as one rigid piece. */
+.ojo { width: 26px; height: 26px; flex: none; overflow: visible }
+.ojo .f { fill: currentColor }
+.ojo .n, .ojo .d { fill: var(--red) }
+.ojo .fg, .ojo .d { transform-box: fill-box }
+.ojo .fg { transform-origin: 50% 100% }
+.ojo .d { transform-origin: 50% 50% }
+.ojo.raise .fg { animation: ojo-up .5s cubic-bezier(.3, .8, .3, 1) .12s both }
+.ojo.raise .d { animation: ojo-dot .35s both }
+@keyframes ojo-up { from { transform: rotate(22deg); opacity: .2 } to { transform: none; opacity: 1 } }
+@keyframes ojo-dot { from { opacity: 0 } to { opacity: 1 } }
+
+/* hero */
+.hero { --band: var(--hero); color: var(--hero-ink); padding-block: 0 clamp(40px, 6vw, 72px) }
+.top { display: flex; align-items: center; justify-content: space-between; gap: 16px; padding-block: 18px }
+.logo { font-weight: 900; font-stretch: 112%; font-size: 21px; letter-spacing: -0.02em; display: inline-flex; align-items: center; gap: 5px }
+.top nav { display: flex; align-items: center; gap: clamp(14px, 2.4vw, 30px); font-size: 15px; font-weight: 600 }
+.top nav a { color: var(--hero-ink); text-decoration: none }
+.top nav a:hover { text-decoration: underline }
+.btn { display: inline-flex; align-items: center; justify-content: center; min-height: 48px; padding: 0 22px; border-radius: 6px; border: 2px solid var(--hero-ink);
+  font: 700 16px/1 var(--sans); cursor: pointer; text-decoration: none; background: var(--hero-ink); color: var(--hero) }
+.btn:hover { background: #262a4a }
+.btn.ghost { background: transparent; color: var(--hero-ink) }
+.btn.ghost:hover { background: rgba(20, 23, 43, .09) }
+.top nav .btn { min-height: 40px; padding: 0 16px; font-size: 15px; color: var(--hero) }
+.top nav .btn:hover { text-decoration: none }
+.hero-grid { display: grid; grid-template-columns: minmax(0, 1fr) minmax(0, 1.05fr); gap: clamp(28px, 4.5vw, 60px); align-items: end; padding-top: clamp(16px, 3.5vw, 44px) }
+.hero h1 { font-size: clamp(46px, 7.2vw, 98px); line-height: .9; font-stretch: 66%; font-weight: 850 }
+.hero .sub { font-size: clamp(18px, 1.75vw, 21px); line-height: 1.45; max-width: 30em; margin-top: 22px }
+.cta { display: flex; flex-wrap: wrap; gap: 12px; margin-top: 24px }
+.fine { font-size: 14.5px; color: var(--hero-soft); margin-top: 14px }
+.dict { margin-top: clamp(20px, 3vw, 36px); padding-top: 14px; border-top: 2px solid var(--hero-ink); font-size: 15px; max-width: 34em; color: var(--hero-soft) }
+.dict b { color: var(--hero-ink); font-family: var(--mono); font-weight: 500 }
+
+/* the caption stage: a meeting in progress */
+.stage { background: var(--cap); color: var(--cap-ink); border-radius: 8px; padding: 16px 20px 20px; min-width: 0 }
+.chrome { display: flex; justify-content: space-between; align-items: center; gap: 10px; font: 500 12.5px/1 var(--mono); color: var(--cap-soft); padding-bottom: 14px; border-bottom: 1px solid var(--cap-line) }
+.rec { display: inline-flex; align-items: center; gap: 8px; color: var(--cap-ink) }
+.rec i { width: 9px; height: 9px; border-radius: 50%; background: var(--red); display: inline-block }
+.feed { display: grid; gap: 12px; padding-block: 18px 16px }
+.cap { font: 500 clamp(17px, 1.7vw, 21px)/1.35 var(--sans) }
+.cap .who { display: block; font: 500 12.5px/1.5 var(--mono); color: var(--cap-soft) }
+.cap mark { color: var(--mark-ink) }
+.stage-foot { display: flex; justify-content: space-between; align-items: flex-end; gap: 14px; flex-wrap: wrap-reverse }
+.stage-note { font-size: 13px; color: var(--cap-soft); max-width: 20em; flex: 1 1 10em }
+.tiny { font: 500 12.5px/1 var(--mono); color: var(--cap-ink); background: none; border: 1px solid #3a3e4a; border-radius: 4px; min-height: 32px; padding: 0 10px; cursor: pointer; margin-top: 10px }
+.tiny:hover { border-color: var(--cap-ink) }
+.stage .tiny:focus-visible { outline-color: var(--mark) }
+
+/* the cards window, drawn as it looks on screen */
+.win { width: min(100%, 330px); background: var(--win); color: var(--win-ink); border-radius: 10px; padding: 7px 9px 9px; font-family: "Segoe UI", var(--sans); text-align: left }
+.stage .win { box-shadow: 0 18px 40px -8px rgba(0, 0, 0, .7); flex: none; margin-left: auto }
+.win .head { display: flex; justify-content: space-between; font-size: 12px; color: var(--win-muted); padding: 2px 4px 7px }
+.wm { display: inline-flex; align-items: center; gap: 3px; color: var(--win-ink) }
+.wm .ojo { width: 17px; height: 17px }
+.card { background: var(--win-card); border-radius: 7px; padding: 11px 13px 10px }
+.card + .card { margin-top: 7px }
+.card .h { display: flex; gap: 9px; align-items: flex-start; font-weight: 700; font-size: 16.5px; line-height: 1.25 }
+.card .l { font-size: 14px; line-height: 1.4; margin-top: 4px; padding-left: 30px }
+.card .src { font-size: 11.5px; color: var(--win-muted); margin-top: 6px; padding-left: 30px }
+.card .links { display: flex; flex-wrap: wrap; gap: 4px 14px; font-size: 12.5px; color: var(--win-link); margin-top: 5px; padding-left: 30px; text-decoration: underline; text-underline-offset: 2px }
+.card .btns { display: flex; gap: 8px; justify-content: flex-end; margin-top: 9px }
+.card .btns span { width: 52px; height: 30px; border-radius: 4px; display: grid; place-items: center; font: 600 15px/1 "Segoe UI", var(--sans) }
+.card .ok { background: var(--ok); color: var(--ok-ink) }
+.card .no { background: var(--no); color: var(--win-ink) }
+.card.none { background: transparent; border: 1px dashed #5a5e7c }
+.card.none .h { font-weight: 600; color: var(--win-muted) }
+.card.none .l { color: var(--win-muted); padding-left: 0 }
+.pop { animation: pop .42s cubic-bezier(.2, .9, .3, 1.15) both }
+@keyframes pop { from { transform: translateY(16px) scale(.96); opacity: .15 } to { transform: none; opacity: 1 } }
+
+/* said / shown */
+.ledger { margin-top: 34px; border-top: 2px solid var(--ink) }
+.ledger-head, .row { display: grid; grid-template-columns: 84px minmax(0, 1fr) minmax(0, 330px); gap: 8px 28px }
+.ledger-head { padding-block: 10px; font: 500 12.5px/1.3 var(--mono); color: var(--muted); border-bottom: 1px solid var(--line) }
+.row { padding-block: 20px; border-bottom: 1px solid var(--line); align-items: center }
+.row .tc { font: 500 13px/1.3 var(--mono); color: var(--muted); align-self: start; padding-top: 6px }
+.row q { quotes: none; display: block; font-size: clamp(19px, 2vw, 23px); font-weight: 600; line-height: 1.3; font-stretch: 88% }
+.row .why { display: block; color: var(--muted); font-size: 15px; margin-top: 6px; max-width: 46ch }
+.after { margin-top: 26px; font-size: 18px; max-width: 64ch }
+.after b { font-weight: 700 }
+
+/* heads-up and judgment */
+.split { display: grid; grid-template-columns: minmax(0, 1fr) minmax(0, 330px); gap: clamp(24px, 5vw, 72px); align-items: start }
+.wink { font-size: 15px; color: var(--muted); margin-top: 12px }
+.wink b { font: 500 15px/1 var(--mono); color: var(--ink) }
+.stack { display: grid; gap: 12px }
+.any-h { font-stretch: 78%; font-weight: 800; font-size: clamp(26px, 3vw, 36px); line-height: 1.05; margin-top: clamp(40px, 6vw, 64px); padding-top: clamp(24px, 3.5vw, 36px); border-top: 2px solid var(--ink) }
+.any { list-style: none; padding: 0; margin-top: 24px; columns: 2; column-gap: clamp(28px, 5vw, 72px) }
+.any li { break-inside: avoid; border-top: 1px solid var(--line); padding: 11px 0 12px }
+.any b { display: block; font-weight: 700; font-size: 17px }
+.any span { display: block; font: 400 14px/1.5 var(--mono); color: var(--muted); margin-top: 3px }
+
+/* rules */
+.rules { --band: var(--slab); color: var(--slab-ink) }
+.rules .lead { color: var(--slab-muted) }
+.rules :focus-visible { outline-color: var(--mark) }
+.rule-list { list-style: none; padding: 0; margin-top: 36px; display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 0 clamp(28px, 5vw, 72px) }
+.rule-list li { border-top: 1px solid var(--slab-line); padding: 18px 0 22px }
+.rule-list h3 { font-stretch: 78%; font-size: clamp(23px, 2.4vw, 28px); font-weight: 800; line-height: 1.1 }
+.rule-list p { color: var(--slab-muted); margin-top: 8px; font-size: 16px; max-width: 46ch }
+
+/* how it works + first week */
+.two { display: grid; grid-template-columns: minmax(0, 1fr) minmax(0, 1fr); gap: clamp(36px, 6vw, 88px) }
+.two h2 { font-size: clamp(30px, 3.8vw, 44px) }
+.flow { list-style: none; padding: 0; margin-top: 24px; counter-reset: f }
+.flow li { counter-increment: f; display: grid; grid-template-columns: 2.2em minmax(0, 1fr); border-top: 1px solid var(--line); padding: 12px 0; font-size: 16px }
+.flow li::before { content: counter(f); font: 500 14.5px/1.7 var(--mono); color: var(--muted) }
+.logbook { margin-top: 24px; font: 400 14.5px/1.6 var(--mono) }
+.logbook div { display: grid; grid-template-columns: 7.4em minmax(0, 1fr); gap: 12px; border-top: 1px solid var(--line); padding: 12px 0 }
+.logbook dt { color: var(--muted) }
+.logbook b { font-weight: 500; background: linear-gradient(var(--mark), var(--mark)) no-repeat 0 55% / 100% 82%; color: var(--mark-ink); padding: 0 .2em }
+.aside { font-size: 15.5px; color: var(--muted); margin-top: 14px; max-width: 50ch }
+
+/* faq */
+.faq { margin-top: 26px; max-width: 820px }
+.faq details { border-top: 1px solid var(--line) }
+.faq details:last-child { border-bottom: 1px solid var(--line) }
+.faq summary { cursor: pointer; list-style: none; display: flex; justify-content: space-between; gap: 16px; align-items: baseline; padding: 15px 0; font-weight: 700; font-size: 18px }
+.faq summary::-webkit-details-marker { display: none }
+.faq summary::after { content: "+"; font: 500 20px/1 var(--mono); color: var(--muted) }
+.faq details[open] summary::after { content: "\2212" }
+.faq p { color: var(--muted); padding: 0 0 18px; max-width: 66ch }
+
+/* setup */
+.setup { --band: var(--hero); color: var(--hero-ink) }
+.setup h2 { font-size: clamp(40px, 6.4vw, 84px); line-height: .92; font-stretch: 66% }
+.setup-grid { display: grid; grid-template-columns: minmax(0, 1fr) minmax(0, 1fr); gap: clamp(28px, 5vw, 64px); align-items: start }
+.steps { list-style: none; padding: 0; margin-top: 22px; counter-reset: s; max-width: 34em }
+.steps li { counter-increment: s; display: grid; grid-template-columns: 2em minmax(0, 1fr); padding: 11px 0; border-top: 1.5px solid var(--hero-ink); font-size: 17px }
+.steps li::before { content: counter(s); font: 500 15px/1.7 var(--mono) }
+.steps b { font-weight: 700 }
+.needs { margin-top: 18px; font-size: 15px; color: var(--hero-soft); max-width: 36em }
+.needs b { color: var(--hero-ink); font-weight: 700 }
+.prompt-box label { display: block; font: 500 13px/1 var(--mono); color: var(--hero-soft); margin-bottom: 8px }
+#setup-prompt { display: block; width: 100%; height: 7.6em; min-height: 4.6em; resize: vertical; padding: 14px 16px; font: 400 14px/1.6 var(--mono); color: var(--win-ink); background: var(--win); border: 2px solid var(--hero-ink); border-radius: 6px }
+.copy-row { display: flex; flex-wrap: wrap; align-items: center; gap: 12px 22px; margin-top: 14px }
+.copy { min-height: 60px; padding: 0 30px; font-size: 19px }
+.gh { color: var(--hero-ink); font-weight: 700; font-size: 16px }
+.copy-status { min-height: 1.5em; margin-top: 10px; font-size: 15px; font-weight: 600 }
+footer { padding-block: 26px 40px; font-size: 14.5px; color: var(--muted); display: flex; flex-wrap: wrap; gap: 6px 24px; justify-content: space-between }
+.foot-mark { display: inline-flex; align-items: center; gap: 6px }
+.foot-mark .ojo { width: 20px; height: 20px; color: var(--ink) }
+
+@media (max-width: 900px) {
+  .hero-grid, .split, .two, .setup-grid { grid-template-columns: minmax(0, 1fr) }
+  .rule-list { grid-template-columns: minmax(0, 1fr) }
+  .ledger-head, .row { grid-template-columns: 70px minmax(0, 1fr) }
+  .ledger-head span:last-child { display: none }
+  .row .win { grid-column: 2 }
+  .any { columns: 1 }
+}
+@media (max-width: 640px) {
+  body { font-size: 16px }
+  .top nav a:not(.btn) { display: none }
+  .ledger-head { display: none }
+  .row { grid-template-columns: minmax(0, 1fr) }
+  .row .win { grid-column: 1 }
+  .row .tc { padding-top: 0 }
+  .stage { padding: 14px 14px 16px }
+  .stage .win { width: 100% }
+  .copy { width: 100% }
+  .logbook div { grid-template-columns: 5.6em minmax(0, 1fr) }
+}
+@media (prefers-reduced-motion: reduce) {
+  html { scroll-behavior: auto }
+  .pop, .ojo.raise .fg, .ojo.raise .d { animation: none }
+  .stage mark { transition: none }
+}
+</style>
+
+<div class="wrap">
+
+<header class="hero band">
+  <div class="top">
+    <span class="logo"><svg class="ojo" viewBox="0 0 64 64" aria-hidden="true" focusable="false"><g class="fg"><rect class="f" x="24" y="3" width="16" height="40" rx="8"/><rect class="n" x="28" y="7" width="8" height="10" rx="3.5"/></g><circle class="d" cx="32" cy="54" r="7.5"/></svg>Machete</span>
+    <nav aria-label="Sections">
+      <a href="#said">What it catches</a>
+      <a href="#rules">The rules</a>
+      <a class="btn" href="#setup">Set it up</a>
+    </nav>
+  </div>
+
+  <div class="hero-grid">
+    <div>
+      <h1>Get the answer while the question is still open.</h1>
+      <p class="sub">Machete follows the meeting you're recording. When someone asks something nobody has at hand, it looks in your email, docs, sheets, CRM, notes or the web and puts the answer in the corner of your screen, with a link to where it found it. Nothing acts without your ✓.</p>
+      <div class="cta">
+        <a class="btn" href="#setup">Set it up</a>
+        <a class="btn ghost" href="#said">See what it catches</a>
+      </div>
+      <p class="fine">Free and open source. Runs on your own Claude subscription. Tested on Windows.</p>
+      <p class="dict"><b>machete</b>, Argentine school slang: the cheat sheet you sneak into an exam.</p>
+    </div>
+
+    <div class="stage" id="stage">
+      <div class="chrome"><span class="rec"><i aria-hidden="true"></i>REC, example meeting</span><span id="clock">00:23:15</span></div>
+      <div class="feed" id="feed" aria-label="Example transcript">
+        <p class="cap"><span class="who">Alex</span>Before we sign off, <mark>what did you quote us last spring?</mark></p>
+        <p class="cap"><span class="who">You</span>Good question, one second.</p>
+        <p class="cap"><span class="who">Jordan</span>And <mark>do they have anyone in Europe?</mark> Legal will ask.</p>
+      </div>
+      <div class="stage-foot">
+        <div>
+          <p class="stage-note">A replay with made-up data. In the one live demo so far, the answer took about 30 seconds.</p>
+          <button class="tiny" id="replay" type="button" hidden>Play it again</button>
+        </div>
+        <div class="win" role="img" aria-label="The Machete window with two answer cards: quoted 48,000 dollars, from Proposal v2 in your Drive; and yes, a Dublin office, from their About page.">
+          <div class="head"><span class="wm"><svg class="ojo" id="ojoHero" viewBox="0 0 64 64" aria-hidden="true" focusable="false"><g class="fg"><rect class="f" x="24" y="3" width="16" height="40" rx="8"/><rect class="n" x="28" y="7" width="8" height="10" rx="3.5"/></g><circle class="d" cx="32" cy="54" r="7.5"/></svg>Machete</span><span aria-hidden="true">✕</span></div>
+          <div class="card" id="c1"><div class="h"><span aria-hidden="true">🔎</span><span>Quoted: $48,000</span></div><div class="l">Proposal v2, sent 14 Mar</div><div class="src">Northwind proposal (Drive)</div><div class="links"><span>Proposal v2</span><span>Email thread</span></div></div>
+          <div class="card" id="c2"><div class="h"><span aria-hidden="true">🔎</span><span>Yes: Dublin office</span></div><div class="l">EU entity since 2023</div><div class="src">northwind.example/about</div><div class="links"><span>About page</span></div></div>
+        </div>
+      </div>
+    </div>
+  </div>
+</header>
+
+<main>
+
+<section id="said">
+  <h2>Asked in the meeting, answered in the meeting.</h2>
+  <p class="lead">It looks where you would look: your own email, docs, sheets, CRM, task tool, calendar and notes first, then the web for public facts. Every card built from something it read links to it, so you can open the proof while you talk. The examples use made-up data.</p>
+
+  <div class="ledger">
+    <div class="ledger-head" aria-hidden="true"><span>Time</span><span>Someone says</span><span>Machete shows</span></div>
+    <div class="row"><span class="tc">00:04:31</span><div><q><mark>Did they ever sign the NDA</mark>, or are we still waiting?</q><span class="why">Looked in your email and your Drive.</span></div>
+      <div class="win"><div class="card"><div class="h"><span aria-hidden="true">🔎</span><span>Signed 12 Oct</span></div><div class="l">Countersigned by their COO</div><div class="src">NDA, your email</div><div class="links"><span>Signed NDA</span><span>Email thread</span></div></div></div></div>
+    <div class="row"><span class="tc">00:08:02</span><div><q><mark>How many people have signed up</mark> so far?</q><span class="why">Read the sign-up sheet.</span></div>
+      <div class="win"><div class="card"><div class="h"><span aria-hidden="true">🔎</span><span>142 sign-ups</span></div><div class="l">38 of them this week</div><div class="src">Webinar sign-ups (Google Sheets)</div><div class="links"><span>Sign-up sheet</span></div></div></div></div>
+    <div class="row"><span class="tc">00:13:40</span><div><q><mark>What does the contract say</mark> if we want to cancel?</q><span class="why">Found the clause in the signed contract.</span></div>
+      <div class="win"><div class="card"><div class="h"><span aria-hidden="true">🔎</span><span>30 days' notice</span></div><div class="l">Clause 9.2, no fee after month 6</div><div class="src">Service agreement (Drive)</div><div class="links"><span>Clause 9.2</span></div></div></div></div>
+    <div class="row"><span class="tc">00:17:25</span><div><q>Roughly <mark>how big is their team?</mark></q><span class="why">A public fact, so it searched the web with a short, neutral query. No quotes or private details from the meeting go into the search.</span></div>
+      <div class="win"><div class="card"><div class="h"><span aria-hidden="true">🔎</span><span>About 120 people</span></div><div class="l">Offices in Austin and Dublin</div><div class="src">their About page</div><div class="links"><span>About page</span><span>Careers</span></div></div></div></div>
+    <div class="row"><span class="tc">00:21:48</span><div><q>Let's do the follow-up <mark>next Thursday at three</mark>.</q><span class="why">The exact date, checked against your calendar. ✓ adds the event. It never sends invites.</span></div>
+      <div class="win"><div class="card"><div class="h"><span aria-hidden="true">📅</span><span>Thu 26 Nov, 3:00 pm</span></div><div class="l">Follow-up with Alex</div><div class="l">Add it? You're free</div><div class="src">your calendar</div><div class="btns"><span class="ok" aria-hidden="true">✓</span><span class="no" aria-hidden="true">✕</span></div></div></div></div>
+    <div class="row"><span class="tc">00:31:02</span><div><q>Hmm, we should probably look at that at some point.</q><span class="why">Too vague to interrupt you. It goes on the end-of-meeting list instead.</span></div>
+      <div class="win"><div class="card none"><div class="h">No card</div><div class="l">Added to the end-of-meeting list</div></div></div></div>
+  </div>
+  <p class="after"><b>It also takes the next steps off your plate.</b> "I'll send it by Friday" becomes a one-tap task in your task tool, or a reminder on your computer. "Let's find a time" gets two or three free slots, as a draft. When the call ends, a follow-up email is waiting in your drafts, never sent, next to a short report with a checklist of what's still open.</p>
+</section>
+
+<section id="ojo" style="padding-top:0">
+  <div class="split">
+    <div>
+      <h2>A heads-up when nobody asked.</h2>
+      <p class="wink"><b>¡ojo!</b> is how you say "heads up!" in Rioplatense Spanish. It's the raised finger in the logo.</p>
+      <p class="lead">Machete quietly looks up what the meeting is talking about. If something matters to what's being decided right now and the room may not know it, you get one card: the client replied ten minutes ago, their invoice is overdue, what's being agreed clashes with something already promised. About one every ten minutes at most, and only when it's worth it.</p>
+    </div>
+    <div class="stack">
+      <div class="win"><div class="card"><div class="h"><span aria-hidden="true">⚡</span><span>Northwind replied 10 min ago</span></div><div class="l">They accepted the March start</div><div class="src">your email</div><div class="links"><span>Their reply</span></div></div></div>
+      <div class="win"><div class="card"><div class="h"><span aria-hidden="true">⚡</span><span>Invoice 0042 is overdue</span></div><div class="l">$4,200, due 6 Nov</div><div class="src">Invoices (Google Sheets)</div><div class="links"><span>Invoices sheet</span><span>Invoice 0042</span></div></div></div>
+    </div>
+  </div>
+
+  <h3 class="any-h">It isn't working from a list.</h3>
+  <p class="lead">There are no trigger words. Claude reads the whole conversation and your sources and keeps asking one thing: what would help most right now that isn't in front of you? A few cards that question produces:</p>
+  <ul class="any">
+    <li><b>The open item nobody raised</b><span>Last call, Alex promised the revised budget by Friday. Not mentioned yet.</span></li>
+    <li><b>A number that doesn't match</b><span>Someone says about 200 customers. Your CRM says 164.</span></li>
+    <li><b>"That deck from October"</b><span>The exact file, linked.</span></li>
+    <li><b>You were just asked something</b><span>You missed it. The question, in one line.</span></li>
+    <li><b>"What have we agreed so far?"</b><span>The decisions made in this call, from its transcript.</span></li>
+    <li><b>Someone who isn't on the call</b><span>Maria is out until the 28th, from her calendar.</span></li>
+    <li><b>Deadline math</b><span>Six weeks from Monday, skipping the holiday week: Mon 11 Jan.</span></li>
+    <li><b>Another time zone</b><span>3 pm Eastern is 5:00 pm yours.</span></li>
+    <li><b>Money at today's rate</b><span>The converted amount, with the source of the rate.</span></li>
+    <li><b>A past decision that contradicts this one</b><span>On 3 Nov you agreed on annual billing. The notes, linked.</span></li>
+  </ul>
+</section>
+
+<section id="rules" class="rules band">
+  <h2>The rules it keeps.</h2>
+  <p class="lead">Something that follows your meetings has to be boring about limits. These are built in.</p>
+  <ul class="rule-list">
+    <li><h3>Nothing acts without your tap</h3><p>A card is a suggestion. No event, task or reminder exists until you tap ✓. Emails and chat messages are only ever drafts, and it never invites anyone.</p></li>
+    <li><h3>No answer beats a wrong one</h3><p>Not found, or not sure? No card. The question goes on the end-of-meeting list, and so does anything that needs more than one or two quick lookups.</p></li>
+    <li><h3>Rare on purpose</h3><p>No suggestions in the first two minutes, then one card every two minutes at most, about six an hour, never the same thing twice. Only the answer to a question asked out loud can come at any time.</p></li>
+    <li><h3>Your meeting isn't passed around</h3><p>Machete's files stay on your computer. The transcript goes to Claude, which reads it to decide on cards, and nowhere else. Your tools receive only the one action you tapped. Web lookups are on by default for public facts; one line in the settings turns them off.</p></li>
+    <li><h3>Off for private calls</h3><p>If the calendar event is marked private or mentions a doctor, therapy or any word you list, it switches itself off before reading a line. This needs your calendar connected; without it, you turn the copilot off yourself.</p></li>
+    <li><h3>Hidden from screen shares</h3><p>By default the window doesn't show when you share your screen (Windows 10 version 2004 or newer). The first card of every meeting reminds you to tell people you're recording.</p></li>
+  </ul>
+</section>
+
+<section id="how">
+  <div class="two">
+    <div>
+      <h2>How it works.</h2>
+      <ol class="flow">
+        <li><span><b>You record the call</b> the way you already do. No bot joins. It reads Wispr Flow's live meeting transcript, a transcript file another tool writes during the call, or your microphone and computer sound with Whisper running locally.</span></li>
+        <li><span><b>A small background listener</b> notices the meeting start, opens the cards window and starts a Claude Code session.</span></li>
+        <li><span><b>Claude reads along</b> a few seconds behind and looks things up through the connectors your Claude already has.</span></li>
+        <li><span><b>A card appears.</b> ✓ does exactly what it says. ✕ dismisses it.</span></li>
+      </ol>
+      <p class="aside">A notetaker gives you the record after the call. Machete is for the moment during it. Keep both.</p>
+    </div>
+    <div>
+      <h2>The first days, as they happened.</h2>
+      <dl class="logbook">
+        <div><dt>17 Nov 2026</dt><dd>Built in <b>one day</b> with Claude Code.</dd></div>
+        <div><dt>17 Nov</dt><dd>First full meeting: <b>79 minutes</b>, 1,495 transcript lines.</dd></div>
+        <div><dt></dt><dd><b>12 cards</b> offered, <b>1 tapped</b>: a task suggested to a teammate.</dd></div>
+        <div><dt>18 Nov</dt><dd>Live demo: a question asked out loud got its answer card in <b>about 30 seconds</b>.</dd></div>
+      </dl>
+      <p class="aside">One tap out of twelve is the real number from that first meeting, so it's the one printed here. These are one person's first meetings, not a study.</p>
+    </div>
+  </div>
+
+  <div class="faq" id="faq">
+    <details><summary>Which recorders work?</summary><p>Wispr Flow's meeting recording is what it runs on today. It also reads a transcript file that another tool writes while the meeting runs, or your microphone and computer sound with local Whisper, which runs further behind because it transcribes in 8-second pieces. Granola, Otter and Fireflies are not supported, because they don't write a live transcript file on your computer. Zoom or Meet captions only work if a tool saves them to a file as the meeting goes.</p></details>
+    <details><summary>What can it look in and act on?</summary><p>Whatever your Claude is connected to: Google or Outlook calendar, Gmail or Outlook drafts, Slack drafts, ClickUp, Asana, Notion, Linear, Google Sheets, a CRM, plus a notes folder on your computer. With no task tool, a ✓ on a task sets a reminder on your computer.</p></details>
+    <details><summary>Where does my transcript go?</summary><p>To Claude, like anything else in a Claude Code session, and nowhere else. Your recorder is a separate matter: Wispr Flow makes its transcript with its own service, while local Whisper transcribes on your machine.</p></details>
+    <details><summary>What does it cost?</summary><p>Machete is free (MIT). You bring your own Claude subscription, and your recorder if it's a paid one.</p></details>
+    <details><summary>Does it work on a Mac?</summary><p>Nobody has tried yet. The code is written to run there, but it has only been tested on Windows, so expect to fix a few things.</p></details>
+  </div>
+</section>
+
+<section id="setup" class="setup band">
+  <div class="setup-grid">
+    <div>
+      <h2>One short prompt sets it up.</h2>
+      <ol class="steps">
+        <li><span><b>Open Claude Code</b> and paste the prompt.</span></li>
+        <li><span><b>Answer five short questions:</b> your recorder, your calendar, your task tool, where your notes live, your language.</span></li>
+        <li><span><b>Watch the test.</b> It runs a made-up meeting and shows you your first card.</span></li>
+        <li><span><b>Record your next meeting.</b> The cards window opens by itself.</span></li>
+      </ol>
+      <p class="needs"><b>You need:</b> Claude Code with a Claude subscription, Python 3.11 or newer, and something that records your meetings. Git helps; without it, Claude Code downloads the zip.</p>
+    </div>
+    <div class="prompt-box">
+      <label for="setup-prompt">The setup prompt</label>
+      <textarea id="setup-prompt" readonly rows="4" spellcheck="false">Set up Machete for me. Clone https://github.com/GorroRojo/machete into my home folder (if git isn't installed, download https://github.com/GorroRojo/machete/archive/refs/heads/main.zip and unzip it there instead), then open SETUP.md in that folder and follow it step by step.</textarea>
+      <div class="copy-row">
+        <button class="btn copy" id="copyBtn" type="button">Copy setup prompt</button>
+        <a class="gh" href="https://github.com/GorroRojo/machete" target="_blank" rel="noopener">See the code on GitHub</a>
+      </div>
+      <p class="copy-status" id="copyStatus" role="status"></p>
+    </div>
+  </div>
+</section>
+
+</main>
+
+<footer>
+  <span class="foot-mark"><svg class="ojo" viewBox="0 0 64 64" aria-hidden="true" focusable="false"><g class="fg"><rect class="f" x="24" y="3" width="16" height="40" rx="8"/><rect class="n" x="28" y="7" width="8" height="10" rx="3.5"/></g><circle class="d" cx="32" cy="54" r="7.5"/></svg>Machete, a live meeting copilot. Built with Claude Code.</span>
+  <span>Nothing acts without your ✓. <a href="https://github.com/GorroRojo/machete" target="_blank" rel="noopener">Code on GitHub</a></span>
+</footer>
+
+</div>
+
+<script>
+(function () {
+  var reduce = window.matchMedia && window.matchMedia('(prefers-reduced-motion: reduce)').matches;
+
+  // hero replay: the page is complete at rest; this only re-stages what is already there
+  var feed = document.getElementById('feed'), caps = feed ? Array.prototype.slice.call(feed.children) : [];
+  var c1 = document.getElementById('c1'), c2 = document.getElementById('c2'), clock = document.getElementById('clock');
+  var ojo = document.getElementById('ojoHero'), replay = document.getElementById('replay');
+  var timers = [], tick = null;
+  function stamp(s) { return [Math.floor(s / 3600), Math.floor(s % 3600 / 60), s % 60].map(function (n) { return String(n).padStart(2, '0'); }).join(':'); }
+  function raise() { ojo.classList.remove('raise'); void ojo.getBoundingClientRect(); ojo.classList.add('raise'); }
+  function at(ms, fn) { timers.push(setTimeout(fn, ms)); }
+  function show(card) { raise(); card.style.visibility = 'visible'; card.classList.add('pop'); }
+  function play() {
+    timers.forEach(clearTimeout); timers = []; clearInterval(tick);
+    var s = 23 * 60 + 2; clock.textContent = stamp(s);
+    tick = setInterval(function () { s++; clock.textContent = stamp(s); }, 1000);
+    [c1, c2].forEach(function (c) { c.style.visibility = 'hidden'; c.classList.remove('pop'); });
+    caps.forEach(function (p) { p.style.visibility = 'hidden'; var m = p.querySelector('mark'); if (m) m.classList.add('pending'); });
+    function line(i, ms) { at(ms, function () { caps[i].style.visibility = 'visible'; });
+      at(ms + 700, function () { var m = caps[i].querySelector('mark'); if (m) m.classList.remove('pending'); }); }
+    line(0, 300); line(1, 1300); line(2, 3000);
+    at(2100, function () { show(c1); });
+    at(4500, function () { show(c2); });
+    at(9000, function () { clearInterval(tick); });
+  }
+  if (feed && c1 && c2 && clock && ojo && replay && !reduce) {
+    replay.hidden = false;
+    replay.addEventListener('click', play);
+    play();
+  }
+
+  // copy the setup prompt
+  var ta = document.getElementById('setup-prompt'), msg = document.getElementById('copyStatus'), btn = document.getElementById('copyBtn');
+  if (ta && btn) btn.addEventListener('click', function () {
+    var done = function () { msg.textContent = 'Copied. Paste it into Claude Code.'; };
+    var fallback = function () { ta.focus(); ta.select(); var ok = false; try { ok = document.execCommand('copy'); } catch (e) {} if (ok) done(); else msg.textContent = 'Selected. Press Ctrl+C to copy.'; };
+    try { navigator.clipboard.writeText(ta.value).then(done, fallback); } catch (e) { fallback(); }
+  });
+})();
+</script>
+
+</body>
+</html>
